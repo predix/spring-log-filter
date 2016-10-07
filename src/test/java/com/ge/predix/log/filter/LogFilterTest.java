@@ -16,8 +16,11 @@
 package com.ge.predix.log.filter;
 
 import java.util.LinkedHashSet;
+import java.util.UUID;
 
+import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -129,4 +132,26 @@ public class LogFilterTest {
         Assert.assertEquals(logFilter.getHostnames().toString(), "[localhost]");
         Assert.assertEquals(logFilter.getZoneHeaders().toString(), "[X-Identity-Zone-Id, Predix-Zone-Id]");
     }
+    
+    @Test
+    public void testLogFilterWithCorrelationIdHeader() throws Exception {
+        LogFilter logFilter = new LogFilter();
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        String requestCorrelationId = UUID.randomUUID().toString();
+        request.addHeader("Correlation-Id", requestCorrelationId);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        logFilter.doFilter(request, response, new MockFilterChain());
+        String responseCorrelationId = response.getHeader("Correlation-Id");
+        Assert.assertEquals(requestCorrelationId, responseCorrelationId);
+    }
+
+    @Test
+    public void testLogFilterWithoutCorrelationIdHeader() throws Exception {
+        LogFilter logFilter = new LogFilter();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        logFilter.doFilter(new MockHttpServletRequest(), response, new MockFilterChain());
+        String responseCorrelationId = response.getHeader("Correlation-Id");
+        Assert.assertNotNull(responseCorrelationId);
+    }
+
 }
