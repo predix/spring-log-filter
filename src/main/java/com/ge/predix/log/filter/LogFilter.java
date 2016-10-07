@@ -87,8 +87,11 @@ public class LogFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(final HttpServletRequest request, final HttpServletResponse response,
             final FilterChain filterChain) throws ServletException, IOException {
-
-        String correlationId = UUID.randomUUID().toString();
+        String correlationId = request.getHeader(LOG_CORRELATION_ID);
+        if (StringUtils.isEmpty(correlationId)) {
+            correlationId = UUID.randomUUID().toString();
+        }
+        
         put(LOG_CORRELATION_ID, correlationId);
         response.setHeader(LOG_CORRELATION_ID, correlationId);
 
