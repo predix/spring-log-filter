@@ -15,7 +15,7 @@
  *******************************************************************************/
 package com.ge.predix.log.filter;
 
-import static org.slf4j.MDC.put;
+import org.slf4j.MDC;
 
 import java.io.IOException;
 import java.util.LinkedHashSet;
@@ -28,14 +28,25 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StreamUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.util.ContentCachingRequestWrapper;
+import org.springframework.web.util.ContentCachingResponseWrapper;
+
+import com.ge.predix.audit.AuditEvent;
+import com.ge.predix.audit.AuditEventProcessor;
 
 public class LogFilter extends OncePerRequestFilter {
 
     private static final String LOG_CORRELATION_ID = "Correlation-Id";
     private static final String LOG_ZONE_ID = "Zone-Id";
 
+    @Autowired(required = false)
+    private AuditEventProcessor auditProcessor;
+
     private final Set<String> hostnames;
+
     public Set<String> getHostnames() {
         return this.hostnames;
     }
@@ -73,6 +84,7 @@ public class LogFilter extends OncePerRequestFilter {
         } else {
             this.defaultZone = defaultZone;
         }
+
     }
 
     public LogFilter() {
@@ -87,20 +99,52 @@ public class LogFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(final HttpServletRequest request, final HttpServletResponse response,
             final FilterChain filterChain) throws ServletException, IOException {
+
+        String correlationId = setCorrelationId(request, response);
+        String zoneId = setZoneId(request);
+
+        if (null == this.auditProcessor) {
+            filterChain.doFilter(request, response);
+        } else {
+            ContentCachingRequestWrapper cachedRequestWrapper = new ContentCachingRequestWrapper(request);
+            ContentCachingResponseWrapper cachedResponseWrapper = new ContentCachingResponseWrapper(response);
+
+            filterChain.doFilter(cachedRequestWrapper, cachedResponseWrapper);
+
+            // post request processing.
+            this.auditProcessor
+            .process(new AuditEvent(cachedRequestWrapper, cachedResponseWrapper, zoneId, correlationId));
+            copyBodyToResponse(cachedResponseWrapper);
+        }
+    }
+
+    // This method has been made public in the current version of spring-web, in ContentCachingResponseWrapper. Can
+    // be removed after upgrade.
+    private void copyBodyToResponse(final ContentCachingResponseWrapper cachedResponseWrapper) throws IOException {
+        if (cachedResponseWrapper.getContentAsByteArray().length > 0) {
+            cachedResponseWrapper.getResponse().setContentLength(cachedResponseWrapper.getContentAsByteArray().length);
+            StreamUtils.copy(cachedResponseWrapper.getContentAsByteArray(),
+                    cachedResponseWrapper.getResponse().getOutputStream());
+            cachedResponseWrapper.resetBuffer();
+        }
+    }
+
+    private String setZoneId(final HttpServletRequest request) {
+        String zoneId = getZoneId(request);
+        if (StringUtils.isNotEmpty(zoneId)) {
+            MDC.put(LOG_ZONE_ID, zoneId);
+        }
+        return zoneId;
+    }
+
+    private String setCorrelationId(final HttpServletRequest request, final HttpServletResponse response) {
         String correlationId = request.getHeader(LOG_CORRELATION_ID);
         if (StringUtils.isEmpty(correlationId)) {
             correlationId = UUID.randomUUID().toString();
         }
-        
-        put(LOG_CORRELATION_ID, correlationId);
+        MDC.put(LOG_CORRELATION_ID, correlationId);
         response.setHeader(LOG_CORRELATION_ID, correlationId);
-
-        String zoneId = getZoneId(request);
-        if (StringUtils.isNotEmpty(zoneId)) {
-            put(LOG_ZONE_ID, zoneId);
-        }
-
-        filterChain.doFilter(request, response);
+        return correlationId;
     }
 
     String getZoneId(final HttpServletRequest request) {
@@ -125,5 +169,9 @@ public class LogFilter extends OncePerRequestFilter {
             }
         }
         return null;
+    }
+    
+    public void setAuditProcessor(final AuditEventProcessor auditProcessor) {
+        this.auditProcessor = auditProcessor;
     }
 }
