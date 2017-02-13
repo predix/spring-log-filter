@@ -15,16 +15,32 @@
  *******************************************************************************/
 package com.ge.predix.log.filter;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+
+import java.io.IOException;
 import java.util.LinkedHashSet;
 import java.util.UUID;
 
+import javax.servlet.Servlet;
+import javax.servlet.ServletException;
+
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import com.ge.predix.audit.AuditEvent;
+import com.ge.predix.audit.AuditEventWriter;
+
 public class LogFilterTest {
+
+    static final String TEST_RESPONSE_CONTENT = "test-response-content";
+    private static final String TEST_REQUEST_CONTENT = "test-request-content";
 
     @Test
     public void testLogFilterWithAcsHeader() throws Exception {
@@ -35,7 +51,7 @@ public class LogFilterTest {
 
         Assert.assertEquals(logFilter.getZoneId(request), "log-test-zone");
     }
-    
+
     @Test
     public void testLogFilterWithSubdomain() throws Exception {
         LogFilter logFilter = new LogFilter();
@@ -44,7 +60,7 @@ public class LogFilterTest {
 
         Assert.assertEquals(logFilter.getZoneId(request), "log-test-zone");
     }
-    
+
     @Test
     public void testLogFilterWithSubdomainAndHeader() throws Exception {
         LogFilter logFilter = new LogFilter();
@@ -54,7 +70,7 @@ public class LogFilterTest {
 
         Assert.assertEquals(logFilter.getZoneId(request), "log-test-zone");
     }
-    
+
     @Test
     public void testLogFilterWithTwoHeaders() throws Exception {
         LogFilter logFilter = new LogFilter();
@@ -65,7 +81,7 @@ public class LogFilterTest {
 
         Assert.assertEquals(logFilter.getZoneId(request), "log-test-zone");
     }
-    
+
     @Test
     public void testLogFilterWithEmptyHeaderWithSubdomain() throws Exception {
         LogFilter logFilter = new LogFilter();
@@ -75,7 +91,7 @@ public class LogFilterTest {
 
         Assert.assertEquals(logFilter.getZoneId(request), "log-test-zone");
     }
-    
+
     @Test
     public void testLogFilterWithEmptyHeaderAndNoSubdomain() throws Exception {
         LogFilter logFilter = new LogFilter();
@@ -91,7 +107,7 @@ public class LogFilterTest {
         LinkedHashSet<String> hostnames = new LinkedHashSet<>();
         hostnames.add("hostOne");
         hostnames.add("hostTwo");
-        
+
         LinkedHashSet<String> zoneHeaders = new LinkedHashSet<>();
         zoneHeaders.add("headerOne");
         zoneHeaders.add("headerTwo");
@@ -132,7 +148,7 @@ public class LogFilterTest {
         Assert.assertEquals(logFilter.getHostnames().toString(), "[localhost]");
         Assert.assertEquals(logFilter.getZoneHeaders().toString(), "[X-Identity-Zone-Id, Predix-Zone-Id]");
     }
-    
+
     @Test
     public void testLogFilterWithCorrelationIdHeader() throws Exception {
         LogFilter logFilter = new LogFilter();
@@ -152,6 +168,29 @@ public class LogFilterTest {
         logFilter.doFilter(new MockHttpServletRequest(), response, new MockFilterChain());
         String responseCorrelationId = response.getHeader("Correlation-Id");
         Assert.assertNotNull(responseCorrelationId);
+    }
+
+    @Test
+    public void testLogFilterAudit() throws ServletException, IOException {
+        AuditEventWriter testEventWriter = Mockito.mock(AuditEventWriter.class);
+        Mockito.when(testEventWriter.process(any(AuditEvent.class))).thenAnswer(new Answer<Boolean>() {
+            public Boolean answer(final InvocationOnMock invocation) {
+                AuditEvent event = (AuditEvent) invocation.getArguments()[0];
+                assertEquals(event.getRequestBody(), TEST_REQUEST_CONTENT);
+                assertEquals(event.getResponseBody(), TEST_RESPONSE_CONTENT);
+                return true;
+            }
+        });
+
+        LogFilter testLogFilter = new LogFilter();
+        testLogFilter.setAuditProcessor(testEventWriter);
+
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setContent(TEST_REQUEST_CONTENT.getBytes());
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        Servlet mockServlet = Mockito.mock(Servlet.class);
+        testLogFilter.doFilterInternal(request, response, new MockFilterChain(mockServlet, new MockControllerFilter()));
     }
 
 }
