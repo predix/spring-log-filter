@@ -1,7 +1,7 @@
 Utility filter for tracing, log enrichment and auditing.
 
 # What does this filter do ?
-## Populate tracing headers
+## Populate HTTP headers for [tracing](opentracing.io)
 This filter initializes an HTTP header(X-B3-TraceID) for tracing, if not already present. The header is also added in the outgoing response.
 ## Enrich SLF4J [MDC](https://logback.qos.ch/manual/mdc.html) with tracing and cloudfoundry VCAP info
 * The log filter adds the following VCAP information to the MDC:
@@ -21,7 +21,7 @@ This filter initializes an HTTP header(X-B3-TraceID) for tracing, if not already
 ### Example Log4j pattern to use tracing/vcap info in logs
 Add the log pattern to the log4j.properties file. Then reference the log pattern as the layout's conversion pattern using the EnhancedPatternLayout layout for desired appenders.
 ```
-LOG_PATTERN={ "time":"%d{yyyy-MM-dd HH:mm:ss.SSS}{UTC}", "corr":"%X{X-B3-TraceId}", "appn":"%X{APP_NAME}", "dpmt":"%X{APP_ID}", "inst":"%X{INSTANCE_ID}", "tnt":"%X{Zone-Id}", "msg":"${project.artifactId}%X{context} - ${PID} [%t] .... %5p --- %c{1}: %m" }%n
+LOG_PATTERN={ "time":"%d{yyyy-MM-dd HH:mm:ss.SSS}{UTC}", "corr":"%X{X-B3-TraceId}", "appn":"%X{APP_NAME}", "dpmt":"%X{APP_ID}", "inst":"%X{INSTANCE_ID}", "tnt":"%X{Zone-Id}", "msg":"${PID} %m" }%n
 
 log4j.appender.CONSOLE.layout=org.apache.log4j.EnhancedPatternLayout
 log4j.appender.CONSOLE.layout.ConversionPattern=${LOG_PATTERN}
