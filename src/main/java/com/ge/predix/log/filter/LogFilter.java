@@ -15,8 +15,6 @@
  *******************************************************************************/
 package com.ge.predix.log.filter;
 
-import org.slf4j.MDC;
-
 import java.io.IOException;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -28,24 +26,35 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.ContentCachingRequestWrapper;
 import org.springframework.web.util.ContentCachingResponseWrapper;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ge.predix.audit.AuditEvent;
 import com.ge.predix.audit.AuditEventProcessor;
+import com.ge.predix.vcap.VcapApplication;
 
 public class LogFilter extends OncePerRequestFilter {
 
-    private static final String LOG_CORRELATION_ID = "Correlation-Id";
-    private static final String LOG_ZONE_ID = "Zone-Id";
+    private static final String CORRELATION_HEADER_NAME = "X-B3-TraceId";
+    private static final String ZONE_HEADER_NAME = "Zone-Id";
+
+    @Value("${VCAP_APPLICATION:}")
+    private String vcapApplicationEnvJson;
 
     @Autowired(required = false)
     private AuditEventProcessor auditProcessor;
+    
+    private ObjectMapper mapper = new ObjectMapper();
 
     private final Set<String> hostnames;
+
+    private VcapApplication vcapApplication;
 
     public Set<String> getHostnames() {
         return this.hostnames;
@@ -84,7 +93,6 @@ public class LogFilter extends OncePerRequestFilter {
         } else {
             this.defaultZone = defaultZone;
         }
-
     }
 
     public LogFilter() {
@@ -94,6 +102,7 @@ public class LogFilter extends OncePerRequestFilter {
         this.zoneHeaders.add("Predix-Zone-Id");
         this.zoneHeaders.add("X-Identity-Zone-Id");
         this.defaultZone = "";
+        this.vcapApplication = null;
     }
 
     @Override
@@ -102,7 +111,7 @@ public class LogFilter extends OncePerRequestFilter {
 
         String correlationId = setCorrelationId(request, response);
         String zoneId = setZoneId(request);
-
+        addVcapToMDC();
         if (null == this.auditProcessor) {
             filterChain.doFilter(request, response);
         } else {
@@ -115,6 +124,15 @@ public class LogFilter extends OncePerRequestFilter {
             this.auditProcessor
             .process(new AuditEvent(cachedRequestWrapper, cachedResponseWrapper, zoneId, correlationId));
             copyBodyToResponse(cachedResponseWrapper);
+        }
+    }
+
+    private void addVcapToMDC() {
+        if (this.vcapApplication != null) {
+            MDC.put("APP_ID", this.vcapApplication.getAppId());
+            MDC.put("APP_NAME", this.vcapApplication.getAppName());
+            MDC.put("INSTANCE_ID", this.vcapApplication.getInstanceId());
+            MDC.put("INSTANCE_INDEX", this.vcapApplication.getInstanceIndex());
         }
     }
 
@@ -132,18 +150,18 @@ public class LogFilter extends OncePerRequestFilter {
     private String setZoneId(final HttpServletRequest request) {
         String zoneId = getZoneId(request);
         if (StringUtils.isNotEmpty(zoneId)) {
-            MDC.put(LOG_ZONE_ID, zoneId);
+            MDC.put(ZONE_HEADER_NAME, zoneId);
         }
         return zoneId;
     }
 
     private String setCorrelationId(final HttpServletRequest request, final HttpServletResponse response) {
-        String correlationId = request.getHeader(LOG_CORRELATION_ID);
+        String correlationId = request.getHeader(CORRELATION_HEADER_NAME);
         if (StringUtils.isEmpty(correlationId)) {
             correlationId = UUID.randomUUID().toString();
         }
-        MDC.put(LOG_CORRELATION_ID, correlationId);
-        response.setHeader(LOG_CORRELATION_ID, correlationId);
+        MDC.put(CORRELATION_HEADER_NAME, correlationId);
+        response.setHeader(CORRELATION_HEADER_NAME, correlationId);
         return correlationId;
     }
 
@@ -173,5 +191,25 @@ public class LogFilter extends OncePerRequestFilter {
     
     public void setAuditProcessor(final AuditEventProcessor auditProcessor) {
         this.auditProcessor = auditProcessor;
+    }
+
+    
+    @Override
+    public void afterPropertiesSet() {
+        this.setVcapApplication(this.vcapApplicationEnvJson);
+    }
+
+    public VcapApplication getVcapApplication() {
+        return this.vcapApplication;
+    }
+
+    void setVcapApplication(final String vcapString) {
+        try {
+            this.vcapApplication = this.mapper.readValue(vcapString, VcapApplication.class);
+        } catch (Exception e) {
+            this.logger.error("Error while reading from vcap.");
+            this.logger.error(e.getMessage());
+            this.vcapApplication = null;
+        }
     }
 }

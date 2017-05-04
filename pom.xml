@@ -13,14 +13,14 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
     See the License for the specific language governing permissions and 
     limitations under the License.
- -->
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.ge.predix</groupId>
     <artifactId>spring-log-filter</artifactId>
-    <version>1.0.2</version>
+    <version>1.1.0</version>
     <name>Predix Spring Log Filter</name>
     <description>This library provides a spring filter that generates correlation ids to help trace issues in log files.</description>
     <packaging>jar</packaging>
@@ -99,7 +99,11 @@
             <artifactId>jackson-databind</artifactId>
             <version>2.5.0</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.16.16</version>
+        </dependency>
         <!-- For Testing -->
         <dependency>
             <groupId>org.testng</groupId>

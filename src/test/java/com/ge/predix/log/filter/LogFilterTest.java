@@ -19,6 +19,8 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.LinkedHashSet;
 import java.util.UUID;
 
@@ -118,6 +120,23 @@ public class LogFilterTest {
     }
 
     @Test
+    public void testVcapApplicationEnvIsSet() throws IOException {
+        String vcapString = new String(Files.readAllBytes(Paths.get("src/test/resources/vcap_example.json")));
+        LinkedHashSet<String> hostnames = new LinkedHashSet<>();
+        hostnames.add("hostOne");
+        hostnames.add("hostTwo");
+        LinkedHashSet<String> zoneHeaders = new LinkedHashSet<>();
+        zoneHeaders.add("headerOne");
+        zoneHeaders.add("headerTwo");
+        LogFilter logFilter = new LogFilter(hostnames, zoneHeaders, "acs");
+        logFilter.setVcapApplication(vcapString);
+        Assert.assertEquals("2", logFilter.getVcapApplication().getInstanceIndex());
+        Assert.assertEquals("5b2332ca1b6ff9c2d481b5353cd117e8", logFilter.getVcapApplication().getInstanceId());
+        Assert.assertEquals("test-application", logFilter.getVcapApplication().getAppName());
+        Assert.assertEquals("5e0a1f5f-7da0-4b1f-982f-e7d06da0886a", logFilter.getVcapApplication().getAppId());
+    }
+
+    @Test
     public void testConstructorArgumentsNoHeaders() {
         LinkedHashSet<String> hostnames = new LinkedHashSet<>();
         hostnames.add("hostOne");
@@ -154,10 +173,10 @@ public class LogFilterTest {
         LogFilter logFilter = new LogFilter();
         MockHttpServletRequest request = new MockHttpServletRequest();
         String requestCorrelationId = UUID.randomUUID().toString();
-        request.addHeader("Correlation-Id", requestCorrelationId);
+        request.addHeader("X-B3-TraceId", requestCorrelationId);
         MockHttpServletResponse response = new MockHttpServletResponse();
         logFilter.doFilter(request, response, new MockFilterChain());
-        String responseCorrelationId = response.getHeader("Correlation-Id");
+        String responseCorrelationId = response.getHeader("X-B3-TraceId");
         Assert.assertEquals(requestCorrelationId, responseCorrelationId);
     }
 
@@ -166,7 +185,7 @@ public class LogFilterTest {
         LogFilter logFilter = new LogFilter();
         MockHttpServletResponse response = new MockHttpServletResponse();
         logFilter.doFilter(new MockHttpServletRequest(), response, new MockFilterChain());
-        String responseCorrelationId = response.getHeader("Correlation-Id");
+        String responseCorrelationId = response.getHeader("X-B3-TraceId");
         Assert.assertNotNull(responseCorrelationId);
     }
 
