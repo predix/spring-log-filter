@@ -14,10 +14,11 @@ The log filter also adds the following variables to the MDC:
     Zone-Id
 
 ###Log4j
-Add the log pattern to the log4j.properties file. Then reference the log pattern as a conversion pattern for desired appenders.
+Add the log pattern to the log4j.properties file. Then reference the log pattern as the layout's conversion pattern using the EnhancedPatternLayout layout for desired appenders.
 
-LOG_PATTERN={ "time":"%d{yyyy-MM-dd HH:mm:ss.SSS,UTC}", "corr":"%X{X-B3-TraceId}", "appn":"%X{APP_NAME}", "dpmt":"%X{APP_ID}", "inst":"%X{INSTANCE_ID}", "tnt":"%X{Zone-Id}", "msg":"${project.artifactId}%X{context} - ${PID} [%t] .... %5p --- %c{1}: %m" }%n
+LOG_PATTERN={ "time":"%d{yyyy-MM-dd HH:mm:ss.SSS}{UTC}", "corr":"%X{X-B3-TraceId}", "appn":"%X{APP_NAME}", "dpmt":"%X{APP_ID}", "inst":"%X{INSTANCE_ID}", "tnt":"%X{Zone-Id}", "msg":"${project.artifactId}%X{context} - ${PID} [%t] .... %5p --- %c{1}: %m" }%n
 
+log4j.appender.CONSOLE.layout=org.apache.log4j.EnhancedPatternLayout
 log4j.appender.CONSOLE.layout.ConversionPattern=${LOG_PATTERN}
 
 ## Auditing
