@@ -19,12 +19,9 @@ This filter initializes an HTTP header(X-B3-TraceID) for tracing, if not already
 * Optionally, this filter can also be used to generate audit events which includes the request and response payload.
 
 ### Example Log4j pattern to use tracing/vcap info in logs
-Add the log pattern to the log4j.properties file. Then reference the log pattern as the layout's conversion pattern using the EnhancedPatternLayout layout for desired appenders.
+Reference the PredixLayout for desired appenders.
 ```
-LOG_PATTERN={ "time":"%d{yyyy-MM-dd HH:mm:ss.SSS}{UTC}", "corr":"%X{X-B3-TraceId}", "appn":"%X{APP_NAME}", "dpmt":"%X{APP_ID}", "inst":"%X{INSTANCE_ID}", "tnt":"%X{Zone-Id}", "msg":"${PID} %m" }%n
-
-log4j.appender.CONSOLE.layout=org.apache.log4j.EnhancedPatternLayout
-log4j.appender.CONSOLE.layout.ConversionPattern=${LOG_PATTERN}
+log4j.appender.CONSOLE.layout=com.ge.predix.log4j1.PredixLayout
 ```
 
 ## Auditing
