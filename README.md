@@ -3,6 +3,7 @@ Utility filter for tracing, log enrichment and auditing.
 # What does this filter do ?
 ## Populate HTTP headers for [tracing](opentracing.io)
 This filter initializes an HTTP header(X-B3-TraceID) for tracing, if not already present. The header is also added in the outgoing response.
+
 ## Enrich SLF4J [MDC](https://logback.qos.ch/manual/mdc.html) with tracing and cloudfoundry VCAP info
 * The log filter adds the following VCAP information to the MDC:
 ```
@@ -23,6 +24,12 @@ Reference the PredixLayout for desired appenders.
 ```
 log4j.appender.CONSOLE.layout=com.ge.predix.log4j1.PredixLayout
 ```
+
+## JSON Layout for log4j 1
+This layout formats the log in JSON and includes the cloudfoundry VCAP info listed in the section above.
+
+Sample log message:
+![](docs/sample-json-log.png)
 
 ## Auditing
 Wire an [AuditEventProcessor](src/main/java/com/ge/predix/audit/AuditEventProcessor.java) bean to 

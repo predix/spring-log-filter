@@ -13,15 +13,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class PredixLayoutPattern extends PatternConverter {
 
-    private final LinkedHashMap<String, Object> logFormatMap = new LinkedHashMap<String, Object>();
+    private final LinkedHashMap<String, Object> logFormatMap = new LinkedHashMap<>();
 
-    private ObjectMapper mapperObj = new ObjectMapper();
+    private final ObjectMapper mapperObj = new ObjectMapper();
 
-    private SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+    private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
     public PredixLayoutPattern() {
         this.simpleDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-      }
+    }
 
     @Override
     protected String convert(final LoggingEvent event) {

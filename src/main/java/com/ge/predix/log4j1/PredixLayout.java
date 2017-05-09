@@ -7,12 +7,13 @@ public class PredixLayout extends Layout {
 
     private final PredixLayoutPattern predixLayoutPattern = new PredixLayoutPattern();
 
-    private boolean handlesExceptions;
+    private final boolean handlesExceptions;
 
     public PredixLayout() {
         this.handlesExceptions = false;
-      }
+    }
 
+    @Override
     public String format(final LoggingEvent event) {
         return this.predixLayoutPattern.convert(event);
     }
