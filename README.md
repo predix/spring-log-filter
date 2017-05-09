@@ -3,6 +3,7 @@ Utility filter for tracing, log enrichment and auditing.
 # What does this filter do ?
 ## Populate HTTP headers for [tracing](opentracing.io)
 This filter initializes an HTTP header(X-B3-TraceID) for tracing, if not already present. The header is also added in the outgoing response.
+
 ## Enrich SLF4J [MDC](https://logback.qos.ch/manual/mdc.html) with tracing and cloudfoundry VCAP info
 * The log filter adds the following VCAP information to the MDC:
 ```
@@ -19,13 +20,16 @@ This filter initializes an HTTP header(X-B3-TraceID) for tracing, if not already
 * Optionally, this filter can also be used to generate audit events which includes the request and response payload.
 
 ### Example Log4j pattern to use tracing/vcap info in logs
-Add the log pattern to the log4j.properties file. Then reference the log pattern as the layout's conversion pattern using the EnhancedPatternLayout layout for desired appenders.
+Reference the PredixLayout for desired appenders.
 ```
-LOG_PATTERN={ "time":"%d{yyyy-MM-dd HH:mm:ss.SSS}{UTC}", "corr":"%X{X-B3-TraceId}", "appn":"%X{APP_NAME}", "dpmt":"%X{APP_ID}", "inst":"%X{INSTANCE_ID}", "tnt":"%X{Zone-Id}", "msg":"${PID} %m" }%n
+log4j.appender.CONSOLE.layout=com.ge.predix.log4j1.PredixLayout
+```
 
-log4j.appender.CONSOLE.layout=org.apache.log4j.EnhancedPatternLayout
-log4j.appender.CONSOLE.layout.ConversionPattern=${LOG_PATTERN}
-```
+## JSON Layout for log4j 1
+This layout formats the log in JSON and includes the cloudfoundry VCAP info listed in the section above.
+
+Sample log message:
+![](docs/sample-json-log.png)
 
 ## Auditing
 Wire an [AuditEventProcessor](src/main/java/com/ge/predix/audit/AuditEventProcessor.java) bean to 
