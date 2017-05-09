@@ -64,11 +64,10 @@ public class PredixLayoutTest {
         LoggingEvent logEvent = new LoggingEvent(FILE_NAME, null, timeStamp, Level.INFO, msg, THREAD_NAME, null, "ndc",
                 info, mdc);
         String actual = predixLayout.format(logEvent);
-        String expected = "{\"time\":\"" + expectedTimeStamp + "\",\"tnt\":\"" + ZONE_VALUE + "\",\"corr\":\""
-                + CORRELATION_VALUE + "\",\"appn\":\"" + APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE
-                + "\",\"inst\":\"" + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME + "\",\"mod\":\"" + FILE_NAME
-                + "\",\"lvl\":\"" + Level.INFO.toString()
-                + "\",\"msg\":{\"width\":4,\"length\":3,\"units\":\"inches\",\"height\":5},\"stck\":null}\n";
+        String expected = "{\"time\":\"" + expectedTimeStamp +"\",\"tnt\":\"" + ZONE_VALUE +"\",\"corr\":\"" 
+        + CORRELATION_VALUE + "\",\"appn\":\"" + APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE + "\",\"inst\":\""
+                + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME + "\",\"mod\":\"" + FILE_NAME + "\",\"lvl\":\""
+                + Level.INFO.toString() + "\",\"msg\":{\"width\":4,\"length\":3,\"units\":\"inches\",\"height\":5}}\n";
         Assert.assertEquals(expected, actual);
     }
 
@@ -105,6 +104,15 @@ public class PredixLayoutTest {
                 + "[\"org.stacktrace.TestException\",\"\\n\\t at com.ge.predix.some.package.Class.method(Class.java:234)\",\"\\n\\t "
                 + "at com.ge.predix.some.other.package.OtherClass.diffMethod(OtherClass.java:45)\"]}\n";
         Assert.assertEquals(expected, actual);
+        //check that a logEvent without a stack trace is not polluted from previous logEvent with a stack trace.
+        logEvent = new LoggingEvent(FILE_NAME, null, timeStamp, Level.INFO,
+                msg, THREAD_NAME, null, "ndc", info, mdc);
+        actual = predixLayout.format(logEvent);
+        expected = "{\"time\":\"" + expectedTimeStamp +"\",\"tnt\":\"" + ZONE_VALUE +"\",\"corr\":\"" 
+        + CORRELATION_VALUE + "\",\"appn\":\"" + APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE + "\",\"inst\":\""
+                + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME + "\",\"mod\":\"" + FILE_NAME + "\",\"lvl\":\""
+                + Level.INFO.toString() + "\",\"msg\":{\"width\":4,\"length\":3,\"units\":\"inches\",\"height\":5}}\n";
+        Assert.assertEquals(expected, actual);
     }
 
     @Test
@@ -122,10 +130,10 @@ public class PredixLayoutTest {
         LoggingEvent logEvent = new LoggingEvent(FILE_NAME, null, timeStamp, Level.INFO, null, THREAD_NAME, null, "ndc",
                 null, mdc);
         String actual = predixLayout.format(logEvent);
-        String expected = "{\"time\":\"" + expectedTimeStamp + "\",\"tnt\":\"" + ZONE_VALUE + "\",\"corr\":\""
-                + CORRELATION_VALUE + "\",\"appn\":\"" + APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE
-                + "\",\"inst\":\"" + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME + "\",\"mod\":\"?\",\"lvl\":\""
-                + Level.INFO.toString() + "\",\"msg\":null,\"stck\":null}\n";
+        String expected = "{\"time\":\"" + expectedTimeStamp +"\",\"tnt\":\"" + ZONE_VALUE +"\",\"corr\":\"" 
+        + CORRELATION_VALUE + "\",\"appn\":\"" + APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE + "\",\"inst\":\""
+                + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME + "\",\"mod\":\"?\",\"lvl\":\""
+                + Level.INFO.toString() + "\",\"msg\":null}\n";
         Assert.assertEquals(expected, actual);
     }
 }

@@ -25,21 +25,31 @@ public class PredixLayoutPattern extends PatternConverter {
 
     @Override
     protected String convert(final LoggingEvent event) {
-        this.logFormatMap.put("time", this.simpleDateFormat.format(new Date(event.getTimeStamp())));
+        this.logFormatMap.put("time",
+                this.simpleDateFormat.format(new Date(event.getTimeStamp())));
         this.logFormatMap.put("tnt", event.getMDC("Zone-Id"));
         this.logFormatMap.put("corr", event.getMDC("X-B3-TraceId"));
         this.logFormatMap.put("appn", event.getMDC("APP_NAME"));
         this.logFormatMap.put("dpmt", event.getMDC("APP_ID"));
         this.logFormatMap.put("inst", event.getMDC("INSTANCE_ID"));
         this.logFormatMap.put("tid", event.getThreadName());
-        this.logFormatMap.put("mod", event.getLocationInformation().getFileName());
+        this.logFormatMap.put("mod",
+                event.getLocationInformation().getFileName());
         this.logFormatMap.put("lvl", event.getLevel().toString());
         this.logFormatMap.put("msg", event.getMessage());
-        this.logFormatMap.put("stck", event.getThrowableStrRep());
+        this.logFormatMap.remove("stck");
+        if (null != event.getThrowableInformation()) {
+            this.logFormatMap.put("stck", event.getThrowableStrRep());
+        } else {
+            /* Reusing the map between events so removing the key is important
+            to prevent stack trace pollution of other log events. */
+            this.logFormatMap.remove("stck");
+        }
         try {
             return this.mapperObj.writeValueAsString(this.logFormatMap) + "\n";
         } catch (JsonProcessingException e) {
-            return "Failed to convert log to json for event: " + event.getMessage();
+            return "Failed to convert log to json for event: "
+                    + event.getMessage();
         }
     }
 }
