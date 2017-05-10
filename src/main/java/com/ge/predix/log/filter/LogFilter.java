@@ -41,6 +41,10 @@ import com.ge.predix.vcap.VcapApplication;
 
 public class LogFilter extends OncePerRequestFilter {
 
+    private static final String APP_ID = "APP_ID";
+    private static final String APP_NAME = "APP_NAME";
+    private static final String INSTANCE_ID = "INSTANCE_ID";
+    private static final String INSTANCE_INDEX = "INSTANCE_INDEX";
     private static final String CORRELATION_HEADER_NAME = "X-B3-TraceId";
     private static final String ZONE_HEADER_NAME = "Zone-Id";
 
@@ -106,33 +110,48 @@ public class LogFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(final HttpServletRequest request, final HttpServletResponse response,
-            final FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(final HttpServletRequest request,
+            final HttpServletResponse response, final FilterChain filterChain)
+            throws ServletException, IOException {
 
-        String correlationId = setCorrelationId(request, response);
-        String zoneId = setZoneId(request);
-        addVcapToMDC();
-        if (null == this.auditProcessor) {
-            filterChain.doFilter(request, response);
-        } else {
-            ContentCachingRequestWrapper cachedRequestWrapper = new ContentCachingRequestWrapper(request);
-            ContentCachingResponseWrapper cachedResponseWrapper = new ContentCachingResponseWrapper(response);
+        try {
+            String correlationId = setCorrelationId(request, response);
+            String zoneId = setZoneId(request);
+            addVcapToMDC();
+            if (null == this.auditProcessor) {
+                filterChain.doFilter(request, response);
+            } else {
+                ContentCachingRequestWrapper cachedRequestWrapper = new ContentCachingRequestWrapper(request);
+                ContentCachingResponseWrapper cachedResponseWrapper = new ContentCachingResponseWrapper(
+                        response);
 
-            filterChain.doFilter(cachedRequestWrapper, cachedResponseWrapper);
+                filterChain.doFilter(cachedRequestWrapper, cachedResponseWrapper);
 
-            // post request processing.
-            this.auditProcessor
-            .process(new AuditEvent(cachedRequestWrapper, cachedResponseWrapper, zoneId, correlationId));
-            copyBodyToResponse(cachedResponseWrapper);
+                // post request processing.
+                this.auditProcessor.process(new AuditEvent(cachedRequestWrapper,
+                        cachedResponseWrapper, zoneId, correlationId));
+                copyBodyToResponse(cachedResponseWrapper);
+            }
+        } finally {
+            clearMDC();
         }
+    }
+
+    private void clearMDC() {
+        MDC.remove(APP_ID);
+        MDC.remove(APP_NAME);
+        MDC.remove(INSTANCE_ID);
+        MDC.remove(INSTANCE_INDEX);
+        MDC.remove(ZONE_HEADER_NAME);
+        MDC.remove(CORRELATION_HEADER_NAME);
     }
 
     private void addVcapToMDC() {
         if (this.vcapApplication != null) {
-            MDC.put("APP_ID", this.vcapApplication.getAppId());
-            MDC.put("APP_NAME", this.vcapApplication.getAppName());
-            MDC.put("INSTANCE_ID", this.vcapApplication.getInstanceId());
-            MDC.put("INSTANCE_INDEX", this.vcapApplication.getInstanceIndex());
+            MDC.put(APP_ID, this.vcapApplication.getAppId());
+            MDC.put(APP_NAME, this.vcapApplication.getAppName());
+            MDC.put(INSTANCE_ID, this.vcapApplication.getInstanceId());
+            MDC.put(INSTANCE_INDEX, this.vcapApplication.getInstanceIndex());
         }
     }
 
