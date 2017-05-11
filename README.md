@@ -13,16 +13,16 @@ Sample log message:
 * Enrich SLF4J [MDC](https://logback.qos.ch/manual/mdc.html) with tracing and cloudfoundry VCAP info
    * The log filter adds the following VCAP information to the MDC. 
    * This is used by the PredixLayout for adding this information in the log. See 
-```
-    APP_ID
-    APP_NAME
-    INSTANCE_ID
-```
+      ```
+          APP_ID
+          APP_NAME
+          INSTANCE_ID
+      ```
     * It also adds the following from HTTP headers:
-```
-    X-B3-TraceId
-    Zone-Id
-```
+      ```
+          X-B3-TraceId
+          Zone-Id
+      ```
 
 ## 3. Auditing
 Optionally, this filter can also be used to generate audit events which includes the request and response payload.
@@ -60,12 +60,14 @@ Optionally, this filter can also be used to generate audit events which includes
 ```
 
 * Configure log4j.properties to use PredixLayout
+
 Reference the PredixLayout for desired appenders.
 ```
 log4j.appender.CONSOLE.layout=com.ge.predix.log4j1.PredixLayout
 ```
 
 * If you are using Auditing
+
   * Wire an [AuditEventProcessor](src/main/java/com/ge/predix/audit/AuditEventProcessor.java) bean to 
 [LogFilter](src/main/java/com/ge/predix/log/filter/LogFilter.java), to receive AuditEvent for each request.
 
