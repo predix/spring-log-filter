@@ -37,30 +37,20 @@ public class PredixLayoutTest {
     private static final String ZONE_HEADER = "Zone-Id";
 
     private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+    private final PredixLayout predixLayout = new PredixLayout();
 
     @Before
-    public void beforeTest() {
+    public void beforeSuite() {
         this.simpleDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
     @Test
     public void testPredixLayoutRegularLog() throws IOException {
-        PredixLayout predixLayout = new PredixLayout();
         LocationInfo info = new LocationInfo(FILE_NAME, CLASS_NAME, METHOD_NAME, LINE_NUMBER);
         long timeStamp = Instant.now().toEpochMilli();
         String expectedTimeStamp = this.simpleDateFormat.format(new Date(timeStamp));
-        HashMap<String, String> mdc = new HashMap<>();
-        mdc.put(CORRELATION_HEADER, CORRELATION_VALUE);
-        mdc.put(APP_ID, APP_ID_VALUE);
-        mdc.put(APP_NAME, APP_NAME_VALUE);
-        mdc.put(INSTANCE_ID, INSTANCE_ID_VALUE);
-        mdc.put(INSTANCE_INDEX, INSTANCE_INDEX_VALUE);
-        mdc.put(ZONE_HEADER, ZONE_VALUE);
-        HashMap<String, Object> msg = new HashMap<>();
-        msg.put("height", 5);
-        msg.put("width", 4);
-        msg.put("length", 3);
-        msg.put("units", "inches");
+        HashMap<String, String> mdc = getMDC();
+        HashMap<String, Object> msg = getMsg();
         LoggingEvent logEvent = new LoggingEvent(FILE_NAME, null, timeStamp, Level.INFO, msg, THREAD_NAME, null, "ndc",
                 info, mdc);
         String actual = predixLayout.format(logEvent);
@@ -68,27 +58,36 @@ public class PredixLayoutTest {
         + CORRELATION_VALUE + "\",\"appn\":\"" + APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE + "\",\"inst\":\""
                 + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME + "\",\"mod\":\"" + FILE_NAME + "\",\"lvl\":\""
                 + Level.INFO.toString() + "\",\"msg\":{\"width\":4,\"length\":3,\"units\":\"inches\",\"height\":5}}\n";
+        System.out.println(actual);
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testPredixLayoutSpecialCharsLog() throws IOException {
+        LocationInfo info = new LocationInfo(FILE_NAME, CLASS_NAME, METHOD_NAME, LINE_NUMBER);
+        long timeStamp = Instant.now().toEpochMilli();
+        String expectedTimeStamp = this.simpleDateFormat.format(new Date(timeStamp));
+        HashMap<String, String> mdc = getMDC();
+        HashMap<String, Object> msg = new HashMap<>();
+        msg.put("quote", '"');
+        msg.put("backslash", (char)92);
+        LoggingEvent logEvent = new LoggingEvent(FILE_NAME, null, timeStamp, Level.INFO, msg, THREAD_NAME, null, "ndc",
+                info, mdc);
+        String actual = predixLayout.format(logEvent);
+        String expected = "{\"time\":\"" + expectedTimeStamp +"\",\"tnt\":\"" + ZONE_VALUE +"\",\"corr\":\"" 
+        + CORRELATION_VALUE + "\",\"appn\":\"" + APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE + "\",\"inst\":\""
+                + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME + "\",\"mod\":\"" + FILE_NAME + "\",\"lvl\":\""
+                + Level.INFO.toString() + "\",\"msg\":{\"quote\":\"\\\"\",\"backslash\":\"\\\\\"}}\n";
         Assert.assertEquals(expected, actual);
     }
 
     @Test
     public void testPredixLayoutExceptionLog() throws IOException {
-        PredixLayout predixLayout = new PredixLayout();
         LocationInfo info = new LocationInfo(FILE_NAME, CLASS_NAME, METHOD_NAME, LINE_NUMBER);
         long timeStamp = Instant.now().toEpochMilli();
         String expectedTimeStamp = this.simpleDateFormat.format(new Date(timeStamp));
-        HashMap<String, String> mdc = new HashMap<>();
-        mdc.put(CORRELATION_HEADER, CORRELATION_VALUE);
-        mdc.put(APP_ID, APP_ID_VALUE);
-        mdc.put(APP_NAME, APP_NAME_VALUE);
-        mdc.put(INSTANCE_ID, INSTANCE_ID_VALUE);
-        mdc.put(INSTANCE_INDEX, INSTANCE_INDEX_VALUE);
-        mdc.put(ZONE_HEADER, ZONE_VALUE);
-        HashMap<String, Object> msg = new HashMap<>();
-        msg.put("height", 5);
-        msg.put("width", 4);
-        msg.put("length", 3);
-        msg.put("units", "inches");
+        HashMap<String, String> mdc = getMDC();
+        HashMap<String, Object> msg = getMsg();
         String[] exceptionArray = new String[] { "org.stacktrace.TestException",
                 "\n\t at com.ge.predix.some.package.Class.method(Class.java:234)",
                 "\n\t at com.ge.predix.some.other.package.OtherClass.diffMethod(OtherClass.java:45)" };
@@ -117,9 +116,29 @@ public class PredixLayoutTest {
 
     @Test
     public void testPredixLayoutMissingInfoLog() throws IOException {
-        PredixLayout predixLayout = new PredixLayout();
         long timeStamp = Instant.now().toEpochMilli();
         String expectedTimeStamp = this.simpleDateFormat.format(new Date(timeStamp));
+        HashMap<String, String> mdc = getMDC();
+        LoggingEvent logEvent = new LoggingEvent(FILE_NAME, null, timeStamp, null, null, THREAD_NAME, null, "ndc",
+                null, mdc);
+        String actual = predixLayout.format(logEvent);
+        System.out.println(actual);
+        String expected = "{\"time\":\"" + expectedTimeStamp +"\",\"tnt\":\"" + ZONE_VALUE +"\",\"corr\":\"" 
+        + CORRELATION_VALUE + "\",\"appn\":\"" + APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE + "\",\"inst\":\""
+                + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME + "\",\"mod\":\"?\",\"msg\":null}\n";
+        Assert.assertEquals(expected, actual);
+    }
+
+    private HashMap<String, Object> getMsg() {
+        HashMap<String, Object> msg = new HashMap<>();
+        msg.put("height", 5);
+        msg.put("width", 4);
+        msg.put("length", 3);
+        msg.put("units", "inches");
+        return msg;
+    }
+
+    private HashMap<String, String> getMDC() {
         HashMap<String, String> mdc = new HashMap<>();
         mdc.put(CORRELATION_HEADER, CORRELATION_VALUE);
         mdc.put(APP_ID, APP_ID_VALUE);
@@ -127,13 +146,6 @@ public class PredixLayoutTest {
         mdc.put(INSTANCE_ID, INSTANCE_ID_VALUE);
         mdc.put(INSTANCE_INDEX, INSTANCE_INDEX_VALUE);
         mdc.put(ZONE_HEADER, ZONE_VALUE);
-        LoggingEvent logEvent = new LoggingEvent(FILE_NAME, null, timeStamp, Level.INFO, null, THREAD_NAME, null, "ndc",
-                null, mdc);
-        String actual = predixLayout.format(logEvent);
-        String expected = "{\"time\":\"" + expectedTimeStamp +"\",\"tnt\":\"" + ZONE_VALUE +"\",\"corr\":\"" 
-        + CORRELATION_VALUE + "\",\"appn\":\"" + APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE + "\",\"inst\":\""
-                + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME + "\",\"mod\":\"?\",\"lvl\":\""
-                + Level.INFO.toString() + "\",\"msg\":null}\n";
-        Assert.assertEquals(expected, actual);
+        return mdc;
     }
 }
