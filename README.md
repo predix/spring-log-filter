@@ -31,7 +31,7 @@ Reference the PredixLayout for desired appenders.
 log4j.appender.CONSOLE.layout=com.ge.predix.log4j1.PredixLayout
 ```
 
-## Auditing
+## 3. Auditing
 * Optionally, this filter can also be used to generate audit events which includes the request and response payload.
 * Wire an [AuditEventProcessor](src/main/java/com/ge/predix/audit/AuditEventProcessor.java) bean to 
 [LogFilter](src/main/java/com/ge/predix/log/filter/LogFilter.java), to receive AuditEvent for each request.
