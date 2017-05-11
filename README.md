@@ -29,45 +29,43 @@ Optionally, this filter can also be used to generate audit events which includes
 
 # How to use it ?
 * Dependency
-```xml
-        <dependency>
-            <groupId>com.ge.predix</groupId>
-            <artifactId>spring-log-filter</artifactId>
-            <version>${spring-log-filter.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-log4j12</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-```
+  ```xml
+          <dependency>
+              <groupId>com.ge.predix</groupId>
+              <artifactId>spring-log-filter</artifactId>
+              <version>${spring-log-filter.version}</version>
+              <exclusions>
+                  <exclusion>
+                      <groupId>org.slf4j</groupId>
+                      <artifactId>slf4j-log4j12</artifactId>
+                  </exclusion>
+              </exclusions>
+          </dependency>
+  ```
 * Configure Bean to specify zone extraction
-```xml
-    <bean id="logFilter" class="com.ge.predix.log.filter.LogFilter">
-       <constructor-arg>
-            <set value-type="java.lang.String">
-                <value>${BASE_DOMAIN:localhost}</value>
-            </set>
-        </constructor-arg>
-        <constructor-arg>
-            <set value-type="java.lang.String">
-                <value>Predix-Zone-Id</value>
-            </set>
-        </constructor-arg>
-        <constructor-arg value="DEFAULT_ZONE_NAME" />
-    </bean>
-```
+  ```xml
+      <bean id="logFilter" class="com.ge.predix.log.filter.LogFilter">
+         <constructor-arg>
+              <set value-type="java.lang.String">
+                  <value>${BASE_DOMAIN:localhost}</value>
+              </set>
+          </constructor-arg>
+          <constructor-arg>
+              <set value-type="java.lang.String">
+                  <value>Predix-Zone-Id</value>
+              </set>
+          </constructor-arg>
+          <constructor-arg value="DEFAULT_ZONE_NAME" />
+      </bean>
+  ```
 
 * Configure log4j.properties to use PredixLayout
 
-Reference the PredixLayout for desired appenders.
-```
-log4j.appender.CONSOLE.layout=com.ge.predix.log4j1.PredixLayout
-```
+  ```
+  log4j.appender.CONSOLE.layout=com.ge.predix.log4j1.PredixLayout
+  ```
 
 * If you are using Auditing
-
   * Wire an [AuditEventProcessor](src/main/java/com/ge/predix/audit/AuditEventProcessor.java) bean to 
 [LogFilter](src/main/java/com/ge/predix/log/filter/LogFilter.java), to receive AuditEvent for each request.
 
