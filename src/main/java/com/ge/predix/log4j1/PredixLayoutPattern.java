@@ -15,20 +15,19 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 
 public class PredixLayoutPattern extends PatternConverter {
 
-    private static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat(
-            "yyyy-MM-dd HH:mm:ss.SSS");
+    public static final SimpleDateFormat ISO_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 
     private static final ObjectWriter JSON_WRITER = new ObjectMapper().writer();
 
     public PredixLayoutPattern() {
-        SIMPLE_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
+        ISO_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
     @Override
     protected String convert(final LoggingEvent event) {
         // need LinkedHashMap to preserve order of log fields
         Map<String, Object> logFormat = new LinkedHashMap<>();
-        logFormat.put("time", SIMPLE_DATE_FORMAT.format(new Date(event.getTimeStamp())));
+        logFormat.put("time", ISO_DATE_FORMAT.format(new Date(event.getTimeStamp())));
         logFormat.put("tnt", event.getMDC("Zone-Id"));
         logFormat.put("corr", event.getMDC("X-B3-TraceId"));
         logFormat.put("appn", event.getMDC("APP_NAME"));

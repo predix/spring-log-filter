@@ -36,7 +36,7 @@ public class PredixLayoutTest {
     private static final String CORRELATION_HEADER = "X-B3-TraceId";
     private static final String ZONE_HEADER = "Zone-Id";
 
-    private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+    private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
     private final PredixLayout predixLayout = new PredixLayout();
 
     @Before
