@@ -64,6 +64,12 @@ Optionally, this filter can also be used to generate audit events which includes
   ```
   log4j.appender.CONSOLE.layout=com.ge.predix.log4j1.PredixLayout
   ```
+* For logback, add PredixEncoder as an encoder
+  ```xml
+  <appender name="myAppender" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="com.ge.predix.logback.PredixEncoder" />
+  </appender>
+  ```
 
 * If you are using Auditing
   * Wire an [AuditEventProcessor](src/main/java/com/ge/predix/audit/AuditEventProcessor.java) bean to 
