@@ -2,11 +2,14 @@ package com.ge.predix.log4j1;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.helpers.PatternConverter;
 import org.apache.log4j.spi.LoggingEvent;
 
@@ -41,11 +44,7 @@ public class PredixLayoutPattern extends PatternConverter {
         }
         logFormat.put("msg", event.getMessage());
         if (null != event.getThrowableInformation()) {
-            String[] stack = event.getThrowableStrRep();
-            for(int i = 0; i < stack.length; i++) {
-                stack[i] = stack[i].trim();
-            }
-            logFormat.put("stck", stack);
+            logFormat.put("stck", getStackTrace(event));
         }
         try {
             return JSON_WRITER.writeValueAsString(logFormat) + "\n";
@@ -54,4 +53,22 @@ public class PredixLayoutPattern extends PatternConverter {
                     + event.getMessage();
         }
     }
+    
+    private List<List<String>> getStackTrace(final LoggingEvent event) {
+        List<List<String>> exceptions = new ArrayList<>();
+        Throwable throwable = event.getThrowableInformation().getThrowable();
+        while (throwable != null) {
+            List<String> stack = new ArrayList<>();
+            stack.add(throwable.getClass().getName()
+                    + (!StringUtils.isEmpty(throwable.getMessage()) ? ": " + throwable.getMessage() : ""));
+            for (StackTraceElement element : throwable.getStackTrace()) {
+                stack.add("at " + element.toString());
+            }
+            exceptions.add(stack);
+            throwable = throwable.getCause();
+        }
+
+        return exceptions;
+    }
+
 }
