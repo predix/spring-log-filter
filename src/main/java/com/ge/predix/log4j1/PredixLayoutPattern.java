@@ -41,7 +41,11 @@ public class PredixLayoutPattern extends PatternConverter {
         }
         logFormat.put("msg", event.getMessage());
         if (null != event.getThrowableInformation()) {
-            logFormat.put("stck", event.getThrowableStrRep());
+            String[] stack = event.getThrowableStrRep();
+            for(int i = 0; i < stack.length; i++) {
+                stack[i] = stack[i].trim();
+            }
+            logFormat.put("stck", stack);
         }
         try {
             return JSON_WRITER.writeValueAsString(logFormat) + "\n";

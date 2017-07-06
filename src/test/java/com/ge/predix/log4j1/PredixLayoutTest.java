@@ -113,6 +113,44 @@ public class PredixLayoutTest {
                 + Level.INFO.toString() + "\",\"msg\":{\"width\":4,\"length\":3,\"units\":\"inches\",\"height\":5}}\n";
         Assert.assertEquals(expected, actual);
     }
+    
+    @Test
+    public void testPredixLayoutExceptionChainLog() throws IOException {
+        
+        LocationInfo info = new LocationInfo(FILE_NAME, CLASS_NAME, METHOD_NAME, LINE_NUMBER);
+        long timeStamp = Instant.now().toEpochMilli();
+        String expectedTimeStamp = this.simpleDateFormat.format(new Date(timeStamp));
+        HashMap<String, String> mdc = getMDC();
+        HashMap<String, Object> msg = getMsg();
+        Throwable exceptionCause = new NullPointerException();
+        exceptionCause.setStackTrace(new StackTraceElement[] {
+                new StackTraceElement("com.ge.predix.some.package.Class", "method", "Class.java", 234),
+                new StackTraceElement("com.ge.predix.some.other.package.OtherClass", "diffMethod", "OtherClass.java",
+                        45) });
+        Throwable exceptionRoot = new Exception(exceptionCause);
+        exceptionRoot.setStackTrace(new StackTraceElement[] {
+                new StackTraceElement("com.ge.predix.some.package.Clazz", "method", "Clazz.java", 473),
+                new StackTraceElement("com.ge.predix.some.other.package.OtherClazz", "diffMethod", "OtherClazz.java",
+                        55) });
+
+        ThrowableInformation throwable = new ThrowableInformation(exceptionRoot);
+        LoggingEvent logEvent = new LoggingEvent(FILE_NAME, null, timeStamp, Level.ERROR, msg.toString(), THREAD_NAME, throwable,
+                "ndc", info, mdc);
+        String actual = predixLayout.format(logEvent);
+
+        String expected = "{\"time\":\"" + expectedTimeStamp + "\",\"tnt\":\"" + ZONE_VALUE + "\",\"corr\":\""
+                + CORRELATION_VALUE + "\",\"appn\":\"" + APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE
+                + "\",\"inst\":\"" + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME + "\",\"mod\":\"" + FILE_NAME
+                + "\",\"lvl\":\"" + Level.ERROR.toString()
+                + "\",\"msg\":\"{width=4, length=3, units=inches, height=5}\",\"stck\":["
+                + "\"java.lang.Exception: java.lang.NullPointerException\","
+                + "\"at com.ge.predix.some.package.Clazz.method(Clazz.java:473)\","
+                + "\"at com.ge.predix.some.other.package.OtherClazz.diffMethod(OtherClazz.java:55)\","
+                + "\"Caused by: java.lang.NullPointerException\",\"at com.ge.predix.some.package.Class.method(Class.java:234)\","
+                + "\"at com.ge.predix.some.other.package.OtherClass.diffMethod(OtherClass.java:45)\"]}\n";
+        Assert.assertEquals(expected, actual);
+    }
+
 
     @Test
     public void testPredixLayoutMissingInfoLog() throws IOException {
