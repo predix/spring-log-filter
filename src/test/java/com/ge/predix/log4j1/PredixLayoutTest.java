@@ -122,7 +122,7 @@ public class PredixLayoutTest {
         String expectedTimeStamp = this.simpleDateFormat.format(new Date(timeStamp));
         HashMap<String, String> mdc = getMDC();
         HashMap<String, Object> msg = getMsg();
-        Throwable exceptionCause = new NullPointerException();
+        Throwable exceptionCause = new NullPointerException("example NullPointerException");
         exceptionCause.setStackTrace(new StackTraceElement[] {
                 new StackTraceElement("com.ge.predix.some.package.Class", "method", "Class.java", 234),
                 new StackTraceElement("com.ge.predix.some.other.package.OtherClass", "diffMethod", "OtherClass.java",
@@ -143,10 +143,10 @@ public class PredixLayoutTest {
                 + "\",\"inst\":\"" + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME + "\",\"mod\":\"" + FILE_NAME
                 + "\",\"lvl\":\"" + Level.ERROR.toString()
                 + "\",\"msg\":\"{width=4, length=3, units=inches, height=5}\",\"stck\":["
-                + "[\"java.lang.Exception: java.lang.NullPointerException\","
+                + "[\"java.lang.Exception: java.lang.NullPointerException: example NullPointerException\","
                 + "\"at com.ge.predix.some.package.Clazz.method(Clazz.java:473)\","
                 + "\"at com.ge.predix.some.other.package.OtherClazz.diffMethod(OtherClazz.java:55)\"],"
-                + "[\"java.lang.NullPointerException\",\"at com.ge.predix.some.package.Class.method(Class.java:234)\","
+                + "[\"java.lang.NullPointerException: example NullPointerException\",\"at com.ge.predix.some.package.Class.method(Class.java:234)\","
                 + "\"at com.ge.predix.some.other.package.OtherClass.diffMethod(OtherClass.java:45)\"]]}\n";
         Assert.assertEquals(expected, actual);
     }
