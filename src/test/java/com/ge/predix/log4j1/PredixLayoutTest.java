@@ -88,10 +88,13 @@ public class PredixLayoutTest {
         String expectedTimeStamp = this.simpleDateFormat.format(new Date(timeStamp));
         HashMap<String, String> mdc = getMDC();
         HashMap<String, Object> msg = getMsg();
-        String[] exceptionArray = new String[] { "org.stacktrace.TestException",
-                "\n\t at com.ge.predix.some.package.Class.method(Class.java:234)",
-                "\n\t at com.ge.predix.some.other.package.OtherClass.diffMethod(OtherClass.java:45)" };
-        ThrowableInformation throwable = new ThrowableInformation(exceptionArray);
+        Throwable exceptionThrowable = new Exception();
+        exceptionThrowable.setStackTrace(new StackTraceElement[] {
+                new StackTraceElement("com.ge.predix.some.package.Class", "method", "Class.java", 234),
+                new StackTraceElement("com.ge.predix.some.other.package.OtherClass", "diffMethod", "OtherClass.java",
+                        45) });
+
+        ThrowableInformation throwable = new ThrowableInformation(exceptionThrowable);
         LoggingEvent logEvent = new LoggingEvent(FILE_NAME, null, timeStamp, Level.ERROR, msg, THREAD_NAME, throwable,
                 "ndc", info, mdc);
         String actual = predixLayout.format(logEvent);
@@ -100,8 +103,8 @@ public class PredixLayoutTest {
                 + "\",\"inst\":\"" + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME + "\",\"mod\":\"" + FILE_NAME
                 + "\",\"lvl\":\"" + Level.ERROR.toString()
                 + "\",\"msg\":{\"width\":4,\"length\":3,\"units\":\"inches\",\"height\":5},\"stck\":"
-                + "[\"org.stacktrace.TestException\",\"\\n\\t at com.ge.predix.some.package.Class.method(Class.java:234)\",\"\\n\\t "
-                + "at com.ge.predix.some.other.package.OtherClass.diffMethod(OtherClass.java:45)\"]}\n";
+                + "[[\"java.lang.Exception\",\"at com.ge.predix.some.package.Class.method(Class.java:234)\",\""
+                + "at com.ge.predix.some.other.package.OtherClass.diffMethod(OtherClass.java:45)\"]]}\n";
         Assert.assertEquals(expected, actual);
         //check that a logEvent without a stack trace is not polluted from previous logEvent with a stack trace.
         logEvent = new LoggingEvent(FILE_NAME, null, timeStamp, Level.INFO,
