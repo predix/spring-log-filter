@@ -34,15 +34,13 @@ public class PredixEncoder<E extends ILoggingEvent> extends EncoderBase<E> {
     @Override
     public void doEncode(final E event) throws IOException {
         Map<String, String> mdc = event.getMDCPropertyMap();
-        Object appName = mdc.get("APP_NAME") != null ? mdc.get("APP_NAME") : mdc.getOrDefault("VCAP_APP_NAME", "");
-
 
         // need LinkedHashMap to preserve order of log fields
         Map<String, Object> logFormat = new LinkedHashMap<>();
         logFormat.put("time", ISO_DATE_FORMAT.format(new Date(event.getTimeStamp())));
         logFormat.put("tnt", mdc.getOrDefault("Zone-Id", ""));
         logFormat.put("corr", mdc.getOrDefault("X-B3-TraceId", ""));
-        logFormat.put("appn", appName);
+        logFormat.put("appn", mdc.get("APP_NAME"));
         logFormat.put("dpmt", mdc.getOrDefault("APP_ID", ""));
         logFormat.put("inst", mdc.getOrDefault("INSTANCE_ID", ""));
         logFormat.put("tid", event.getThreadName());

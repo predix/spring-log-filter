@@ -42,7 +42,6 @@ import com.ge.predix.vcap.VcapApplication;
 public class LogFilter extends OncePerRequestFilter {
 
     private static final String APP_ID = "APP_ID";
-    private static final String VCAP_APP_NAME = "VCAP_APP_NAME";
     private static final String APP_NAME = "APP_NAME";
     private static final String INSTANCE_ID = "INSTANCE_ID";
     private static final String INSTANCE_INDEX = "INSTANCE_INDEX";
@@ -144,7 +143,6 @@ public class LogFilter extends OncePerRequestFilter {
     private void clearMDC() {
         MDC.remove(APP_ID);
         MDC.remove(APP_NAME);
-        MDC.remove(VCAP_APP_NAME);
         MDC.remove(INSTANCE_ID);
         MDC.remove(INSTANCE_INDEX);
         MDC.remove(ZONE_HEADER_NAME);
@@ -154,13 +152,14 @@ public class LogFilter extends OncePerRequestFilter {
     private void addAppNameToMDC() {
         if (customAppName != null) {
             MDC.put(APP_NAME, customAppName);
+        } else {
+            MDC.put(APP_NAME, this.vcapApplication.getAppName());
         }
     }
 
     private void addVcapToMDC() {
         if (this.vcapApplication != null) {
             MDC.put(APP_ID, this.vcapApplication.getAppId());
-            MDC.put(VCAP_APP_NAME, this.vcapApplication.getAppName());
             MDC.put(INSTANCE_ID, this.vcapApplication.getInstanceId());
             MDC.put(INSTANCE_INDEX, this.vcapApplication.getInstanceIndex());
         }

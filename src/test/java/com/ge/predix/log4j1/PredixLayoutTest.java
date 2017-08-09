@@ -20,13 +20,12 @@ public class PredixLayoutTest {
 
     private static final String APP_ID = "APP_ID";
     private static final String APP_NAME = "APP_NAME";
-    private static final String VCAP_APP_NAME = "VCAP_APP_NAME";
     private static final String INSTANCE_ID = "INSTANCE_ID";
     private static final String INSTANCE_INDEX = "INSTANCE_INDEX";
     private static final String INSTANCE_ID_VALUE = "6758302";
     private static final String ZONE_VALUE = "test-zone";
     private static final String INSTANCE_INDEX_VALUE = "5";
-    private static final String VCAP_APP_NAME_VALUE = "uaa";
+    private static final String APP_NAME_VALUE = "uaa";
     private static final String APP_ID_VALUE = "098877475";
     private static final String CORRELATION_VALUE = "5678";
     private static final String FILE_NAME = "test.java";
@@ -56,33 +55,13 @@ public class PredixLayoutTest {
                 info, mdc);
         String actual = predixLayout.format(logEvent);
         String expected = "{\"time\":\"" + expectedTimeStamp +"\",\"tnt\":\"" + ZONE_VALUE +"\",\"corr\":\"" 
-        + CORRELATION_VALUE + "\",\"appn\":\"" + VCAP_APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE + "\",\"inst\":\""
+        + CORRELATION_VALUE + "\",\"appn\":\"" + APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE + "\",\"inst\":\""
                 + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME + "\",\"mod\":\"" + FILE_NAME + "\",\"lvl\":\""
                 + Level.INFO.toString() + "\",\"msg\":{\"width\":4,\"length\":3,\"units\":\"inches\",\"height\":5}}\n";
         System.out.println(actual);
         Assert.assertEquals(expected, actual);
     }
     
-
-    @Test
-    public void testPredixLayoutCustomAppNameLog() throws IOException {
-        LocationInfo info = new LocationInfo(FILE_NAME, CLASS_NAME, METHOD_NAME, LINE_NUMBER);
-        long timeStamp = Instant.now().toEpochMilli();
-        String expectedTimeStamp = this.simpleDateFormat.format(new Date(timeStamp));
-        HashMap<String, String> mdc = getMDC();
-        String customAppName = "otherName";
-        mdc.put(APP_NAME, customAppName);
-        HashMap<String, Object> msg = getMsg();
-        LoggingEvent logEvent = new LoggingEvent(FILE_NAME, null, timeStamp, Level.INFO, msg, THREAD_NAME, null, "ndc",
-                info, mdc);
-        String actual = predixLayout.format(logEvent);
-        String expected = "{\"time\":\"" + expectedTimeStamp +"\",\"tnt\":\"" + ZONE_VALUE +"\",\"corr\":\"" 
-        + CORRELATION_VALUE + "\",\"appn\":\"" + customAppName + "\",\"dpmt\":\"" + APP_ID_VALUE + "\",\"inst\":\""
-                + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME + "\",\"mod\":\"" + FILE_NAME + "\",\"lvl\":\""
-                + Level.INFO.toString() + "\",\"msg\":{\"width\":4,\"length\":3,\"units\":\"inches\",\"height\":5}}\n";
-        System.out.println(actual);
-        Assert.assertEquals(expected, actual);
-    }
 
     @Test
     public void testPredixLayoutSpecialCharsLog() throws IOException {
@@ -97,7 +76,7 @@ public class PredixLayoutTest {
                 info, mdc);
         String actual = predixLayout.format(logEvent);
         String expected = "{\"time\":\"" + expectedTimeStamp +"\",\"tnt\":\"" + ZONE_VALUE +"\",\"corr\":\"" 
-        + CORRELATION_VALUE + "\",\"appn\":\"" + VCAP_APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE + "\",\"inst\":\""
+        + CORRELATION_VALUE + "\",\"appn\":\"" + APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE + "\",\"inst\":\""
                 + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME + "\",\"mod\":\"" + FILE_NAME + "\",\"lvl\":\""
                 + Level.INFO.toString() + "\",\"msg\":{\"quote\":\"\\\"\",\"backslash\":\"\\\\\"}}\n";
         Assert.assertEquals(expected, actual);
@@ -121,7 +100,7 @@ public class PredixLayoutTest {
                 "ndc", info, mdc);
         String actual = predixLayout.format(logEvent);
         String expected = "{\"time\":\"" + expectedTimeStamp + "\",\"tnt\":\"" + ZONE_VALUE + "\",\"corr\":\""
-                + CORRELATION_VALUE + "\",\"appn\":\"" + VCAP_APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE
+                + CORRELATION_VALUE + "\",\"appn\":\"" + APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE
                 + "\",\"inst\":\"" + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME + "\",\"mod\":\"" + FILE_NAME
                 + "\",\"lvl\":\"" + Level.ERROR.toString()
                 + "\",\"msg\":{\"width\":4,\"length\":3,\"units\":\"inches\",\"height\":5},\"stck\":"
@@ -133,7 +112,7 @@ public class PredixLayoutTest {
                 msg, THREAD_NAME, null, "ndc", info, mdc);
         actual = predixLayout.format(logEvent);
         expected = "{\"time\":\"" + expectedTimeStamp +"\",\"tnt\":\"" + ZONE_VALUE +"\",\"corr\":\"" 
-        + CORRELATION_VALUE + "\",\"appn\":\"" + VCAP_APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE + "\",\"inst\":\""
+        + CORRELATION_VALUE + "\",\"appn\":\"" + APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE + "\",\"inst\":\""
                 + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME + "\",\"mod\":\"" + FILE_NAME + "\",\"lvl\":\""
                 + Level.INFO.toString() + "\",\"msg\":{\"width\":4,\"length\":3,\"units\":\"inches\",\"height\":5}}\n";
         Assert.assertEquals(expected, actual);
@@ -164,7 +143,7 @@ public class PredixLayoutTest {
         String actual = predixLayout.format(logEvent);
 
         String expected = "{\"time\":\"" + expectedTimeStamp + "\",\"tnt\":\"" + ZONE_VALUE + "\",\"corr\":\""
-                + CORRELATION_VALUE + "\",\"appn\":\"" + VCAP_APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE
+                + CORRELATION_VALUE + "\",\"appn\":\"" + APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE
                 + "\",\"inst\":\"" + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME + "\",\"mod\":\"" + FILE_NAME
                 + "\",\"lvl\":\"" + Level.ERROR.toString()
                 + "\",\"msg\":\"{width=4, length=3, units=inches, height=5}\",\"stck\":["
@@ -187,7 +166,7 @@ public class PredixLayoutTest {
         String actual = predixLayout.format(logEvent);
         System.out.println(actual);
         String expected = "{\"time\":\"" + expectedTimeStamp +"\",\"tnt\":\"" + ZONE_VALUE +"\",\"corr\":\"" 
-        + CORRELATION_VALUE + "\",\"appn\":\"" + VCAP_APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE + "\",\"inst\":\""
+        + CORRELATION_VALUE + "\",\"appn\":\"" + APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE + "\",\"inst\":\""
                 + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME + "\",\"mod\":\"?\",\"msg\":null}\n";
         Assert.assertEquals(expected, actual);
     }
@@ -205,7 +184,7 @@ public class PredixLayoutTest {
         HashMap<String, String> mdc = new HashMap<>();
         mdc.put(CORRELATION_HEADER, CORRELATION_VALUE);
         mdc.put(APP_ID, APP_ID_VALUE);
-        mdc.put(VCAP_APP_NAME, VCAP_APP_NAME_VALUE);
+        mdc.put(APP_NAME, APP_NAME_VALUE);
         mdc.put(INSTANCE_ID, INSTANCE_ID_VALUE);
         mdc.put(INSTANCE_INDEX, INSTANCE_INDEX_VALUE);
         mdc.put(ZONE_HEADER, ZONE_VALUE);

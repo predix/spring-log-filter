@@ -25,13 +25,13 @@ import ch.qos.logback.classic.spi.ThrowableProxy;
 public class PredixEncoderTest {
 
     private static final String APP_ID = "APP_ID";
-    private static final String VCAP_APP_NAME = "VCAP_APP_NAME";
+    private static final String APP_NAME = "APP_NAME";
     private static final String INSTANCE_ID = "INSTANCE_ID";
     private static final String INSTANCE_INDEX = "INSTANCE_INDEX";
     private static final String INSTANCE_ID_VALUE = "6758302";
     private static final String ZONE_VALUE = "test-zone";
     private static final String INSTANCE_INDEX_VALUE = "5";
-    private static final String VCAP_APP_NAME_VALUE = "uaa";
+    private static final String APP_NAME_VALUE = "uaa";
     private static final String APP_ID_VALUE = "098877475";
     private static final String CORRELATION_VALUE = "5678";
     private static final String FILE_NAME = "test.java";
@@ -69,7 +69,7 @@ public class PredixEncoderTest {
         this.predixLayout.doEncode(logEvent);
         String actual = baos.toString();
         String expected = "{\"time\":\"" + expectedTimeStamp + "\",\"tnt\":\"" + ZONE_VALUE + "\",\"corr\":\""
-                + CORRELATION_VALUE + "\",\"appn\":\"" + VCAP_APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE
+                + CORRELATION_VALUE + "\",\"appn\":\"" + APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE
                 + "\",\"inst\":\"" + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME + "\",\"mod\":\"" + FILE_NAME
                 + "\",\"lvl\":\"" + Level.INFO.toString()
                 + "\",\"msg\":\"{width=4, length=3, units=inches, height=5}\"}";
@@ -95,35 +95,7 @@ public class PredixEncoderTest {
         this.predixLayout.doEncode(logEvent);
         String actual = baos.toString();
         String expected = "{\"time\":\"" + expectedTimeStamp + "\",\"tnt\":\"" + ZONE_VALUE + "\",\"corr\":\""
-                + CORRELATION_VALUE + "\",\"appn\":\"" + VCAP_APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE
-                + "\",\"inst\":\"" + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME + "\",\"mod\":\"" + FILE_NAME
-                + "\",\"lvl\":\"" + Level.INFO.toString() + "\",\"msg\":\"\\\"{}\\n,\\\"\\\\\"}";
-        Assert.assertEquals(expected, actual);
-    }
-    
-    @Test
-    public void testPredixLayoutCustomAppName() throws IOException {
-        StackTraceElement[] caller = { new StackTraceElement(CLASS_NAME, METHOD_NAME, FILE_NAME, LINE_NUMBER) };
-        long timeStamp = Instant.now().toEpochMilli();
-        String expectedTimeStamp = this.simpleDateFormat.format(new Date(timeStamp));
-        HashMap<String, String> mdc = getMDC();
-        String msg = "\"{}\n,\"\\";
-        Logger logger = new LoggerContext().getLogger(PredixEncoder.class);
-        LoggingEvent logEvent = new LoggingEvent(CLASS_NAME, logger, Level.INFO, msg.toString(), null, null);
-        logEvent.setMDCPropertyMap(mdc);
-        logEvent.setThreadName("Thread1");
-        logEvent.setCallerData(caller);
-        
-        String customAppName = "otherName";
-        logEvent.setTimeStamp(timeStamp);
-        mdc.put(VCAP_APP_NAME, customAppName);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        PrintStream os = new PrintStream(baos);
-        this.predixLayout.init(os);
-        this.predixLayout.doEncode(logEvent);
-        String actual = baos.toString();
-        String expected = "{\"time\":\"" + expectedTimeStamp + "\",\"tnt\":\"" + ZONE_VALUE + "\",\"corr\":\""
-                + CORRELATION_VALUE + "\",\"appn\":\"" + customAppName + "\",\"dpmt\":\"" + APP_ID_VALUE
+                + CORRELATION_VALUE + "\",\"appn\":\"" + APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE
                 + "\",\"inst\":\"" + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME + "\",\"mod\":\"" + FILE_NAME
                 + "\",\"lvl\":\"" + Level.INFO.toString() + "\",\"msg\":\"\\\"{}\\n,\\\"\\\\\"}";
         Assert.assertEquals(expected, actual);
@@ -155,7 +127,7 @@ public class PredixEncoderTest {
         String actual = baos.toString();
 
         String expected = "{\"time\":\"" + expectedTimeStamp + "\",\"tnt\":\"" + ZONE_VALUE + "\",\"corr\":\""
-                + CORRELATION_VALUE + "\",\"appn\":\"" + VCAP_APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE
+                + CORRELATION_VALUE + "\",\"appn\":\"" + APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE
                 + "\",\"inst\":\"" + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME + "\",\"mod\":\"" + FILE_NAME
                 + "\",\"lvl\":\"" + Level.ERROR.toString()
                 + "\",\"msg\":\"{width=4, length=3, units=inches, height=5}\",\"stck\":"
@@ -195,7 +167,7 @@ public class PredixEncoderTest {
         String actual = baos.toString();
 
         String expected = "{\"time\":\"" + expectedTimeStamp + "\",\"tnt\":\"" + ZONE_VALUE + "\",\"corr\":\""
-                + CORRELATION_VALUE + "\",\"appn\":\"" + VCAP_APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE
+                + CORRELATION_VALUE + "\",\"appn\":\"" + APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE
                 + "\",\"inst\":\"" + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME + "\",\"mod\":\"" + FILE_NAME
                 + "\",\"lvl\":\"" + Level.ERROR.toString()
                 + "\",\"msg\":\"{width=4, length=3, units=inches, height=5}\",\"stck\":["
@@ -224,7 +196,7 @@ public class PredixEncoderTest {
         this.predixLayout.doEncode(logEvent);
         String actual = baos.toString();
         String expected = "{\"time\":\"" + expectedTimeStamp + "\",\"tnt\":\"" + ZONE_VALUE + "\",\"corr\":\""
-                + CORRELATION_VALUE + "\",\"appn\":\"" + VCAP_APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE
+                + CORRELATION_VALUE + "\",\"appn\":\"" + APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE
                 + "\",\"inst\":\"" + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME
                 + "\",\"mod\":\"?\",\"msg\":null}";
         Assert.assertEquals(expected, actual);
@@ -243,7 +215,7 @@ public class PredixEncoderTest {
         HashMap<String, String> mdc = new HashMap<>();
         mdc.put(CORRELATION_HEADER, CORRELATION_VALUE);
         mdc.put(APP_ID, APP_ID_VALUE);
-        mdc.put(VCAP_APP_NAME, VCAP_APP_NAME_VALUE);
+        mdc.put(APP_NAME, APP_NAME_VALUE);
         mdc.put(INSTANCE_ID, INSTANCE_ID_VALUE);
         mdc.put(INSTANCE_INDEX, INSTANCE_INDEX_VALUE);
         mdc.put(ZONE_HEADER, ZONE_VALUE);
