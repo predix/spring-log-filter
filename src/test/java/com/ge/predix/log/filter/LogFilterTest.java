@@ -21,12 +21,15 @@ import static org.mockito.Matchers.any;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.UUID;
 
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 
+import org.apache.log4j.MDC;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -187,6 +190,19 @@ public class LogFilterTest {
         logFilter.doFilter(new MockHttpServletRequest(), response, new MockFilterChain());
         String responseCorrelationId = response.getHeader("X-B3-TraceId");
         Assert.assertNotNull(responseCorrelationId);
+    }
+
+    @Test
+    public void testLogFilterWithCustomAppName() throws Exception {
+        LogFilter logFilter = new LogFilter();
+        String appName = "custom app name";
+        logFilter.setCustomAppName(appName);
+        Map<String, String> expectMap = new HashMap<String, String>();
+        expectMap.put("APP_NAME", "custom app name");
+        
+        Servlet mockServlet = Mockito.mock(Servlet.class);
+
+        logFilter.doFilter(new MockHttpServletRequest(), new MockHttpServletResponse(), new MockFilterChain(mockServlet, new MockMDCFilter(expectMap)));
     }
 
     @Test

@@ -152,7 +152,7 @@ public class LogFilter extends OncePerRequestFilter {
     private void addAppNameToMDC() {
         if (customAppName != null) {
             MDC.put(APP_NAME, customAppName);
-        } else {
+        } else if (this.vcapApplication != null) {
             MDC.put(APP_NAME, this.vcapApplication.getAppName());
         }
     }
