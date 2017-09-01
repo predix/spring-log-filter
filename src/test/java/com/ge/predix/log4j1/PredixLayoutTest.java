@@ -61,6 +61,7 @@ public class PredixLayoutTest {
         System.out.println(actual);
         Assert.assertEquals(expected, actual);
     }
+    
 
     @Test
     public void testPredixLayoutSpecialCharsLog() throws IOException {

@@ -11,6 +11,7 @@ import java.util.TimeZone;
 
 import junit.framework.Assert;
 
+import org.apache.log4j.spi.LocationInfo;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -99,7 +100,7 @@ public class PredixEncoderTest {
                 + "\",\"lvl\":\"" + Level.INFO.toString() + "\",\"msg\":\"\\\"{}\\n,\\\"\\\\\"}";
         Assert.assertEquals(expected, actual);
     }
-
+    
     @Test
     public void testPredixLayoutExceptionLog() throws IOException {
         StackTraceElement[] caller = { new StackTraceElement(CLASS_NAME, METHOD_NAME, FILE_NAME, LINE_NUMBER) };

@@ -40,7 +40,7 @@ public class PredixEncoder<E extends ILoggingEvent> extends EncoderBase<E> {
         logFormat.put("time", ISO_DATE_FORMAT.format(new Date(event.getTimeStamp())));
         logFormat.put("tnt", mdc.getOrDefault("Zone-Id", ""));
         logFormat.put("corr", mdc.getOrDefault("X-B3-TraceId", ""));
-        logFormat.put("appn", mdc.getOrDefault("APP_NAME", ""));
+        logFormat.put("appn", mdc.get("APP_NAME"));
         logFormat.put("dpmt", mdc.getOrDefault("APP_ID", ""));
         logFormat.put("inst", mdc.getOrDefault("INSTANCE_ID", ""));
         logFormat.put("tid", event.getThreadName());

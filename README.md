@@ -5,7 +5,13 @@ Utility filter for tracing, log enrichment and auditing.
 This filter initializes an HTTP header(X-B3-TraceID) for tracing, if not already present. The header is also added in the outgoing response.
 * Note that if you are already using another library for propogating headers, this will have no effect.
 
-## 2. Provides log4j 1 layout for Predix log format
+## 2. Provides log4j1 layout and logback encoder for Predix log format
+Where?
+* Logback Encoder [PredixEncoder.java](src/main/java/com/ge/predix/logback/PredixEncoder.java)
+* Log4j1 layout [PredixLayoutPattern.java](src/main/java/com/ge/predix/log4j1/PredixLayoutPattern.java)
+
+What?
+
 This layout formats the log in JSON and includes the cloudfoundry VCAP info listed in the section above.
 Sample log message:
 ![](docs/sample-json-log.png)
@@ -18,6 +24,7 @@ Sample log message:
           APP_NAME
           INSTANCE_ID
       ```
+      * APP_NAME value can be customized using LogFilter.setCustomAppName
     * It also adds the following from HTTP headers:
       ```
           X-B3-TraceId

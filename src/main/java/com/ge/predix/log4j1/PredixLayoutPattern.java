@@ -30,6 +30,7 @@ public class PredixLayoutPattern extends PatternConverter {
     protected String convert(final LoggingEvent event) {
         // need LinkedHashMap to preserve order of log fields
         Map<String, Object> logFormat = new LinkedHashMap<>();
+
         logFormat.put("time", ISO_DATE_FORMAT.format(new Date(event.getTimeStamp())));
         logFormat.put("tnt", event.getMDC("Zone-Id"));
         logFormat.put("corr", event.getMDC("X-B3-TraceId"));

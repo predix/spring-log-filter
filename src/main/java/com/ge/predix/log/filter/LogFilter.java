@@ -50,6 +50,8 @@ public class LogFilter extends OncePerRequestFilter {
 
     @Value("${VCAP_APPLICATION:}")
     private String vcapApplicationEnvJson;
+    
+    private String customAppName;
 
     @Autowired(required = false)
     private AuditEventProcessor auditProcessor;
@@ -118,6 +120,7 @@ public class LogFilter extends OncePerRequestFilter {
             String correlationId = setCorrelationId(request, response);
             String zoneId = setZoneId(request);
             addVcapToMDC();
+            addAppNameToMDC();
             if (null == this.auditProcessor) {
                 filterChain.doFilter(request, response);
             } else {
@@ -145,11 +148,18 @@ public class LogFilter extends OncePerRequestFilter {
         MDC.remove(ZONE_HEADER_NAME);
         MDC.remove(CORRELATION_HEADER_NAME);
     }
+    
+    private void addAppNameToMDC() {
+        if (customAppName != null) {
+            MDC.put(APP_NAME, customAppName);
+        } else if (this.vcapApplication != null) {
+            MDC.put(APP_NAME, this.vcapApplication.getAppName());
+        }
+    }
 
     private void addVcapToMDC() {
         if (this.vcapApplication != null) {
             MDC.put(APP_ID, this.vcapApplication.getAppId());
-            MDC.put(APP_NAME, this.vcapApplication.getAppName());
             MDC.put(INSTANCE_ID, this.vcapApplication.getInstanceId());
             MDC.put(INSTANCE_INDEX, this.vcapApplication.getInstanceIndex());
         }
@@ -210,6 +220,15 @@ public class LogFilter extends OncePerRequestFilter {
     
     public void setAuditProcessor(final AuditEventProcessor auditProcessor) {
         this.auditProcessor = auditProcessor;
+    }
+    
+
+    public String getCustomAppName() {
+        return customAppName;
+    }
+
+    public void setCustomAppName(final String customAppName) {
+        this.customAppName = customAppName;
     }
 
     
