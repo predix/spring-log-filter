@@ -1,41 +1,7 @@
-Utility filter for tracing, log enrichment and auditing.
+Utility  for request tracing, log enrichment and auditing.
 
-# What does this filter do ?
-## 1. Populate HTTP headers for [tracing](opentracing.io)
-This filter initializes an HTTP header(X-B3-TraceID) for tracing, if not already present. The header is also added in the outgoing response.
-* Note that if you are already using another library for propogating headers, this will have no effect.
+# Maven Dependency to use this project
 
-## 2. Provides log4j1 layout and logback encoder for Predix log format
-Where?
-* Logback Encoder [PredixEncoder.java](src/main/java/com/ge/predix/logback/PredixEncoder.java)
-* Log4j1 layout [PredixLayoutPattern.java](src/main/java/com/ge/predix/log4j1/PredixLayoutPattern.java)
-
-What?
-
-This layout formats the log in JSON and includes the cloudfoundry VCAP info listed in the section above.
-Sample log message:
-![](docs/sample-json-log.png)
-
-* Enrich SLF4J [MDC](https://logback.qos.ch/manual/mdc.html) with tracing and cloudfoundry VCAP info
-   * The log filter adds the following VCAP information to the MDC. 
-   * This is used by the PredixLayout for adding this information in the log. See 
-      ```
-          APP_ID
-          APP_NAME
-          INSTANCE_ID
-      ```
-      * APP_NAME value can be customized using LogFilter.setCustomAppName
-    * It also adds the following from HTTP headers:
-      ```
-          X-B3-TraceId
-          Zone-Id
-      ```
-
-## 3. Auditing
-Optionally, this filter can also be used to generate audit events which includes the request and response payload.
-
-# How to use it ?
-* Dependency
   ```xml
           <dependency>
               <groupId>com.ge.predix</groupId>
@@ -49,7 +15,13 @@ Optionally, this filter can also be used to generate audit events which includes
               </exclusions>
           </dependency>
   ```
-* Configure Bean to specify zone extraction
+
+# HTTP Request tracing
+
+## Populate zipkin HTTP headers for [tracing](opentracing.io)
+This filter initializes an HTTP header(X-B3-TraceID) for tracing, if not already present. The header is also added in the returned response.  Note that if you are already using another library for propogating headers, this will have no effect.
+
+* You will need to configure the following bean to specify how the filter determines tenant in a request
   ```xml
       <bean id="logFilter" class="com.ge.predix.log.filter.LogFilter">
          <constructor-arg>
@@ -66,23 +38,54 @@ Optionally, this filter can also be used to generate audit events which includes
       </bean>
   ```
 
-* Configure log4j.properties to use PredixLayout
+# Enable logging in Predix common format
+## Sample log message:
+![](docs/sample-json-log.png)
 
-  ```
-  log4j.appender.CONSOLE.layout=com.ge.predix.log4j1.PredixLayout
-  ```
-* For logback, add PredixEncoder as an encoder
+## MDC enrichment
+* LogFilter enriches SLF4J [MDC](https://logback.qos.ch/manual/mdc.html) with tracing and cloudfoundry VCAP info
+   * The log filter adds the following VCAP information to the MDC. 
+      ```
+          APP_ID
+          APP_NAME
+          INSTANCE_ID
+      ```
+      * APP_NAME value can be customized using LogFilter.setCustomAppName
+    * It also adds the following from HTTP headers:
+      ```
+          X-B3-TraceId
+          Zone-Id
+      ```
+This information can be used by logging formatters to include in log messages. (see below)
+
+## logback configuration
+[PredixEncoder.java](src/main/java/com/ge/predix/logback/PredixEncoder.java) formats the log in JSON and includes the cloudfoundry VCAP info listed in the section above.
+
+* Configure PredixEncoder 
   ```xml
   <appender name="myAppender" class="ch.qos.logback.core.ConsoleAppender">
     <encoder class="com.ge.predix.logback.PredixEncoder" />
   </appender>
   ```
+  * Encoder source -  [PredixEncoder.java](src/main/java/com/ge/predix/logback/PredixEncoder.java)
+  
+## log4j configuration
+[PredixLayoutPattern.java](src/main/java/com/ge/predix/log4j1/PredixLayoutPattern.java) formats the log in JSON and includes the cloudfoundry VCAP info listed in the section above.
+* Configure log4j.properties to use PredixLayout
+  ```
+  log4j.appender.CONSOLE.layout=com.ge.predix.log4j1.PredixLayout
+  ```
+  
+# Integration with Predix Audit
 
-* If you are using Auditing
+Optionally, this filter can also be used to generate audit events which includes the request and response payload.
+
   * Wire an [AuditEventProcessor](src/main/java/com/ge/predix/audit/AuditEventProcessor.java) bean to 
 [LogFilter](src/main/java/com/ge/predix/log/filter/LogFilter.java), to receive AuditEvent for each request.
 
+
 # Build
+
 ```
 mvn clean package
 ```
