@@ -77,11 +77,14 @@ public class PredixEncoderTest {
     }
 
     private static final String MESSAGE_TEXT = "{length=5, width=4, height=3, units=inches}";
+    private static final String MESSAGE_FORMAT = "{length={}, width={}, height={}, units={}}";
+    private static final Object[] MESSAGE_ARGS = { 5, 4, 3, "inches" };
+    private static final Object[] MESSAGE_ARGS_WITH_THROWABLE = { 5, 4, 3, "inches", THROWABLE };
 
     @Test
     public void testPredixEncoderWithRegularMessage() throws IOException {
 
-        ILoggingEvent input = createLogEvent(MESSAGE_TEXT, null);
+        ILoggingEvent input = createLogEvent(MESSAGE_TEXT, null, null);
 
         String expected = getExpectedOutput(input.getTimeStamp(), MESSAGE_TEXT, null);
 
@@ -92,7 +95,7 @@ public class PredixEncoderTest {
     @Test
     public void testPredixEncoderWithSpecialChars() throws IOException {
 
-        ILoggingEvent input = createLogEvent("\"{}\n,\"\\", null);
+        ILoggingEvent input = createLogEvent("\"{}\n,\"\\", null, null);
 
         String expected = getExpectedOutput(input.getTimeStamp(), "\\\"{}\\n,\\\"\\\\", null);
 
@@ -103,7 +106,7 @@ public class PredixEncoderTest {
     @Test
     public void testPredixEncoderWithException() throws IOException {
 
-        ILoggingEvent input = createLogEvent(MESSAGE_TEXT, THROWABLE);
+        ILoggingEvent input = createLogEvent(MESSAGE_TEXT, null, THROWABLE);
 
         String expected = getExpectedOutput(input.getTimeStamp(), MESSAGE_TEXT,
                 "[[\"java.lang.NullPointerException\"," + "\"at com.ge.predix.some.Class.method(Class.java:234)\","
@@ -120,7 +123,7 @@ public class PredixEncoderTest {
         exceptionRoot.setStackTrace(new StackTraceElement[] {
                 new StackTraceElement("com.ge.predix.some.Clazz", "method", "Clazz.java", 473),
                 new StackTraceElement("com.ge.predix.some.other.OtherClazz", "otherMethod", "OtherClazz.java", 55) });
-        ILoggingEvent input = createLogEvent(MESSAGE_TEXT, exceptionRoot);
+        ILoggingEvent input = createLogEvent(MESSAGE_TEXT, null, exceptionRoot);
 
         String expected = getExpectedOutput(input.getTimeStamp(), MESSAGE_TEXT,
                 "[[\"java.lang.Exception: java.lang.NullPointerException\","
@@ -128,6 +131,56 @@ public class PredixEncoderTest {
                         + "\"at com.ge.predix.some.other.OtherClazz.otherMethod(OtherClazz.java:55)\"],"
                         + "[\"java.lang.NullPointerException\","
                         + "\"at com.ge.predix.some.Class.method(Class.java:234)\","
+                        + "\"at com.ge.predix.some.other.OtherClass.otherMethod(OtherClass.java:45)\"]]");
+
+        String actual = encodeToPredixFormat(input);
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testPredixEncoderWithImplicitException() throws IOException {
+
+        ILoggingEvent input = createLogEvent(MESSAGE_TEXT, new Object[] { THROWABLE }, null);
+
+        String expected = getExpectedOutput(input.getTimeStamp(), MESSAGE_TEXT,
+                "[[\"java.lang.NullPointerException\"," + "\"at com.ge.predix.some.Class.method(Class.java:234)\","
+                        + "\"at com.ge.predix.some.other.OtherClass.otherMethod(OtherClass.java:45)\"]]");
+
+        String actual = encodeToPredixFormat(input);
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testPredixEncoderWithVariables() throws IOException {
+
+        ILoggingEvent input = createLogEvent(MESSAGE_FORMAT, MESSAGE_ARGS, null);
+
+        String expected = getExpectedOutput(input.getTimeStamp(), MESSAGE_TEXT, null);
+
+        String actual = encodeToPredixFormat(input);
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testPredixEncoderWithVariablesAndException() throws IOException {
+
+        ILoggingEvent input = createLogEvent(MESSAGE_FORMAT, MESSAGE_ARGS, THROWABLE);
+
+        String expected = getExpectedOutput(input.getTimeStamp(), MESSAGE_TEXT,
+                "[[\"java.lang.NullPointerException\"," + "\"at com.ge.predix.some.Class.method(Class.java:234)\","
+                        + "\"at com.ge.predix.some.other.OtherClass.otherMethod(OtherClass.java:45)\"]]");
+
+        String actual = encodeToPredixFormat(input);
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testPredixEncoderWithVariablesAndImplicitException() throws IOException {
+
+        ILoggingEvent input = createLogEvent(MESSAGE_FORMAT, MESSAGE_ARGS_WITH_THROWABLE, null);
+
+        String expected = getExpectedOutput(input.getTimeStamp(), MESSAGE_TEXT,
+                "[[\"java.lang.NullPointerException\"," + "\"at com.ge.predix.some.Class.method(Class.java:234)\","
                         + "\"at com.ge.predix.some.other.OtherClass.otherMethod(OtherClass.java:45)\"]]");
 
         String actual = encodeToPredixFormat(input);
@@ -154,10 +207,11 @@ public class PredixEncoderTest {
         Assert.assertEquals(expected, actual);
     }
 
-    private static ILoggingEvent createLogEvent(final String message, final Throwable throwable) {
+    private static ILoggingEvent createLogEvent(final String message, final Object[] messageArgs,
+            final Throwable throwable) {
 
         Logger logger = new LoggerContext().getLogger(PredixEncoder.class);
-        LoggingEvent logEvent = new LoggingEvent(null, logger, Level.INFO, message, throwable, null);
+        LoggingEvent logEvent = new LoggingEvent(null, logger, Level.INFO, message, throwable, messageArgs);
         logEvent.setTimeStamp(Instant.now().toEpochMilli());
         logEvent.setThreadName(THREAD_NAME);
         logEvent.setCallerData(
