@@ -24,6 +24,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -47,7 +49,20 @@ public class PredixEncoder<E extends ILoggingEvent> extends EncoderBase<E> {
     private static final FileOfCallerConverter FILE_OF_CALLER_CONVERTER = new FileOfCallerConverter();
     private static final ObjectWriter JSON_WRITER = new ObjectMapper().writer();
 
-    @Override
+    private Pattern messageLineSeparatorPattern = null;
+
+    public void setMessageLineSeparatorRegex(final String messageLineSeparatorRegex) {
+        messageLineSeparatorPattern = null;
+        if (messageLineSeparatorRegex != null) {
+            try {
+                messageLineSeparatorPattern = Pattern.compile(messageLineSeparatorRegex);
+            } catch (PatternSyntaxException pse) {
+                addWarn("Invalid message line separator: " + pse.getMessage());
+                addWarn("Log message lines will not be separated.");
+            }
+        }
+    }
+
     public void doEncode(final E event) throws IOException {
         Map<String, String> mdc = event.getMDCPropertyMap();
 
@@ -64,7 +79,12 @@ public class PredixEncoder<E extends ILoggingEvent> extends EncoderBase<E> {
         if (null != event.getLevel()) {
             logFormat.put("lvl", event.getLevel().toString());
         }
-        logFormat.put("msg", event.getFormattedMessage());
+        final String message = event.getFormattedMessage();
+        if (message != null && messageLineSeparatorPattern != null) {
+            logFormat.put("msgLines", messageLineSeparatorPattern.split(message));
+        } else {
+            logFormat.put("msg", message);
+        }
         if (null != event.getThrowableProxy()) {
             logFormat.put("stck", getStackTrace(event));
         }
