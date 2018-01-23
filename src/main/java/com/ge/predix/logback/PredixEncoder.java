@@ -32,7 +32,6 @@ import org.apache.commons.lang.StringUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
-import ch.qos.logback.classic.pattern.FileOfCallerConverter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.StackTraceElementProxy;
@@ -46,7 +45,6 @@ public class PredixEncoder<E extends ILoggingEvent> extends EncoderBase<E> {
         ISO_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
-    private static final FileOfCallerConverter FILE_OF_CALLER_CONVERTER = new FileOfCallerConverter();
     private static final ObjectWriter JSON_WRITER = new ObjectMapper().writer();
 
     private Pattern messageLineSeparatorPattern = null;
@@ -75,7 +73,7 @@ public class PredixEncoder<E extends ILoggingEvent> extends EncoderBase<E> {
         logFormat.put("dpmt", mdc.getOrDefault("APP_ID", ""));
         logFormat.put("inst", mdc.getOrDefault("INSTANCE_ID", ""));
         logFormat.put("tid", event.getThreadName());
-        logFormat.put("mod", FILE_OF_CALLER_CONVERTER.convert(event));
+        logFormat.put("mod", event.getLoggerName());
         if (null != event.getLevel()) {
             logFormat.put("lvl", event.getLevel().toString());
         }
