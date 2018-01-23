@@ -27,18 +27,18 @@ import java.util.TimeZone;
 
 import org.apache.commons.lang.StringUtils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+
 import ch.qos.logback.classic.pattern.FileOfCallerConverter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.StackTraceElementProxy;
 import ch.qos.logback.core.encoder.EncoderBase;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-
 public class PredixEncoder<E extends ILoggingEvent> extends EncoderBase<E> {
 
-    public static final SimpleDateFormat ISO_DATE_FORMAT;
+    private static final SimpleDateFormat ISO_DATE_FORMAT;
     static {
         ISO_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
         ISO_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -64,7 +64,7 @@ public class PredixEncoder<E extends ILoggingEvent> extends EncoderBase<E> {
         if (null != event.getLevel()) {
             logFormat.put("lvl", event.getLevel().toString());
         }
-        logFormat.put("msg", event.getMessage());
+        logFormat.put("msg", event.getFormattedMessage());
         if (null != event.getThrowableProxy()) {
             logFormat.put("stck", getStackTrace(event));
         }
@@ -97,5 +97,4 @@ public class PredixEncoder<E extends ILoggingEvent> extends EncoderBase<E> {
 
         return exceptions;
     }
-
 }

@@ -23,12 +23,9 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.TimeZone;
 
-import junit.framework.Assert;
-
-import org.apache.log4j.spi.LocationInfo;
-import org.junit.Before;
 import org.junit.Test;
 
 import ch.qos.logback.classic.Level;
@@ -36,205 +33,212 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.classic.spi.ThrowableProxy;
+import junit.framework.Assert;
 
 public class PredixEncoderTest {
 
-    private static final String APP_ID = "APP_ID";
-    private static final String APP_NAME = "APP_NAME";
-    private static final String INSTANCE_ID = "INSTANCE_ID";
-    private static final String INSTANCE_INDEX = "INSTANCE_INDEX";
-    private static final String INSTANCE_ID_VALUE = "6758302";
-    private static final String ZONE_VALUE = "test-zone";
-    private static final String INSTANCE_INDEX_VALUE = "5";
-    private static final String APP_NAME_VALUE = "uaa";
-    private static final String APP_ID_VALUE = "098877475";
-    private static final String CORRELATION_VALUE = "5678";
+    private static final PredixEncoder<ILoggingEvent> PREDIX_ENCODER = new PredixEncoder<>();
+
+    private static final SimpleDateFormat SIMPLE_DATE_FORMAT;
+    static {
+        SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+        SIMPLE_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
+    }
+
+    private static final String CLASS_NAME = "Geometry";
+    private static final String METHOD_NAME = "calculateVolume";
     private static final String FILE_NAME = "test.java";
-    private static final String CLASS_NAME = "com.ge.predix";
-    private static final String METHOD_NAME = "caculateVolume";
     private static final int LINE_NUMBER = 23;
     private static final String THREAD_NAME = "Thread1";
-    private static final String CORRELATION_HEADER = "X-B3-TraceId";
-    private static final String ZONE_HEADER = "Zone-Id";
 
-    private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-    private final PredixEncoder<ILoggingEvent> predixLayout = new PredixEncoder<>();
-
-    @Before
-    public void beforeSuite() {
-        this.simpleDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+    private static final String ZONE_VALUE = "test-zone";
+    private static final String CORRELATION_VALUE = "5678";
+    private static final String APP_NAME_VALUE = "uaa";
+    private static final String APP_ID_VALUE = "098877475";
+    private static final String INSTANCE_ID_VALUE = "6758302";
+    private static final String INSTANCE_INDEX_VALUE = "5";
+    private static final Map<String, String> MDC;
+    static {
+        MDC = new HashMap<>();
+        MDC.put("Zone-Id", ZONE_VALUE);
+        MDC.put("X-B3-TraceId", CORRELATION_VALUE);
+        MDC.put("APP_NAME", APP_NAME_VALUE);
+        MDC.put("APP_ID", APP_ID_VALUE);
+        MDC.put("INSTANCE_ID", INSTANCE_ID_VALUE);
+        MDC.put("INSTANCE_INDEX", INSTANCE_INDEX_VALUE);
     }
 
+    private static final Throwable THROWABLE;
+    static {
+        THROWABLE = new NullPointerException();
+        THROWABLE.setStackTrace(new StackTraceElement[] {
+                new StackTraceElement("com.ge.predix.some.Class", "method", "Class.java", 234),
+                new StackTraceElement("com.ge.predix.some.other.OtherClass", "otherMethod", "OtherClass.java", 45) });
+    }
+
+    private static final String MESSAGE_TEXT = "{length=5, width=4, height=3, units=inches}";
+    private static final String MESSAGE_FORMAT = "{length={}, width={}, height={}, units={}}";
+    private static final Object[] MESSAGE_ARGS = { 5, 4, 3, "inches" };
+    private static final Object[] MESSAGE_ARGS_WITH_THROWABLE = { 5, 4, 3, "inches", THROWABLE };
+
     @Test
-    public void testPredixLayoutRegularLog() throws IOException {
-        StackTraceElement[] caller = { new StackTraceElement(CLASS_NAME, METHOD_NAME, FILE_NAME, LINE_NUMBER) };
-        long timeStamp = Instant.now().toEpochMilli();
-        String expectedTimeStamp = this.simpleDateFormat.format(new Date(timeStamp));
-        HashMap<String, String> mdc = getMDC();
-        String msg = getMsg();
-        Logger logger = new LoggerContext().getLogger(PredixEncoder.class);
-        LoggingEvent logEvent = new LoggingEvent(CLASS_NAME, logger, Level.INFO, msg, null, null);
-        logEvent.setMDCPropertyMap(mdc);
-        logEvent.setThreadName("Thread1");
-        logEvent.setCallerData(caller);
-        logEvent.setTimeStamp(timeStamp);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        PrintStream os = new PrintStream(baos);
-        this.predixLayout.init(os);
-        this.predixLayout.doEncode(logEvent);
-        String actual = baos.toString();
-        String expected = "{\"time\":\"" + expectedTimeStamp + "\",\"tnt\":\"" + ZONE_VALUE + "\",\"corr\":\""
-                + CORRELATION_VALUE + "\",\"appn\":\"" + APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE
-                + "\",\"inst\":\"" + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME + "\",\"mod\":\"" + FILE_NAME
-                + "\",\"lvl\":\"" + Level.INFO.toString()
-                + "\",\"msg\":\"{width=4, length=3, units=inches, height=5}\"}";
+    public void testPredixEncoderWithRegularMessage() throws IOException {
+
+        ILoggingEvent input = createLogEvent(MESSAGE_TEXT, null, null);
+
+        String expected = getExpectedOutput(input.getTimeStamp(), MESSAGE_TEXT, null);
+
+        String actual = encodeToPredixFormat(input);
         Assert.assertEquals(expected, actual);
     }
 
     @Test
-    public void testPredixLayoutSpecialCharsLog() throws IOException {
-        StackTraceElement[] caller = { new StackTraceElement(CLASS_NAME, METHOD_NAME, FILE_NAME, LINE_NUMBER) };
-        long timeStamp = Instant.now().toEpochMilli();
-        String expectedTimeStamp = this.simpleDateFormat.format(new Date(timeStamp));
-        HashMap<String, String> mdc = getMDC();
-        String msg = "\"{}\n,\"\\";
-        Logger logger = new LoggerContext().getLogger(PredixEncoder.class);
-        LoggingEvent logEvent = new LoggingEvent(CLASS_NAME, logger, Level.INFO, msg.toString(), null, null);
-        logEvent.setMDCPropertyMap(mdc);
-        logEvent.setThreadName("Thread1");
-        logEvent.setCallerData(caller);
-        logEvent.setTimeStamp(timeStamp);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        PrintStream os = new PrintStream(baos);
-        this.predixLayout.init(os);
-        this.predixLayout.doEncode(logEvent);
-        String actual = baos.toString();
-        String expected = "{\"time\":\"" + expectedTimeStamp + "\",\"tnt\":\"" + ZONE_VALUE + "\",\"corr\":\""
-                + CORRELATION_VALUE + "\",\"appn\":\"" + APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE
-                + "\",\"inst\":\"" + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME + "\",\"mod\":\"" + FILE_NAME
-                + "\",\"lvl\":\"" + Level.INFO.toString() + "\",\"msg\":\"\\\"{}\\n,\\\"\\\\\"}";
-        Assert.assertEquals(expected, actual);
-    }
-    
-    @Test
-    public void testPredixLayoutExceptionLog() throws IOException {
-        StackTraceElement[] caller = { new StackTraceElement(CLASS_NAME, METHOD_NAME, FILE_NAME, LINE_NUMBER) };
-        long timeStamp = Instant.now().toEpochMilli();
-        String expectedTimeStamp = this.simpleDateFormat.format(new Date(timeStamp));
-        HashMap<String, String> mdc = getMDC();
-        String msg = getMsg();
-        Throwable t = new NullPointerException();
-        t.setStackTrace(new StackTraceElement[] {
-                new StackTraceElement("com.ge.predix.some.package.Class", "method", "Class.java", 234),
-                new StackTraceElement("com.ge.predix.some.other.package.OtherClass", "diffMethod", "OtherClass.java",
-                        45) });
-        Logger logger = new LoggerContext().getLogger(PredixEncoder.class);
-        LoggingEvent logEvent = new LoggingEvent(CLASS_NAME, logger, Level.ERROR, msg.toString(), null, null);
-        logEvent.setMDCPropertyMap(mdc);
-        logEvent.setThreadName("Thread1");
-        logEvent.setCallerData(caller);
-        logEvent.setTimeStamp(timeStamp);
-        logEvent.setThrowableProxy(new ThrowableProxy(t));
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        PrintStream os = new PrintStream(baos);
-        this.predixLayout.init(os);
-        this.predixLayout.doEncode(logEvent);
-        String actual = baos.toString();
+    public void testPredixEncoderWithSpecialChars() throws IOException {
 
-        String expected = "{\"time\":\"" + expectedTimeStamp + "\",\"tnt\":\"" + ZONE_VALUE + "\",\"corr\":\""
-                + CORRELATION_VALUE + "\",\"appn\":\"" + APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE
-                + "\",\"inst\":\"" + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME + "\",\"mod\":\"" + FILE_NAME
-                + "\",\"lvl\":\"" + Level.ERROR.toString()
-                + "\",\"msg\":\"{width=4, length=3, units=inches, height=5}\",\"stck\":"
-                + "[[\"java.lang.NullPointerException\",\"at com.ge.predix.some.package.Class.method(Class.java:234)\","
-                + "\"at com.ge.predix.some.other.package.OtherClass.diffMethod(OtherClass.java:45)\"]]}";
+        ILoggingEvent input = createLogEvent("\"{}\n,\"\\", null, null);
+
+        String expected = getExpectedOutput(input.getTimeStamp(), "\\\"{}\\n,\\\"\\\\", null);
+
+        String actual = encodeToPredixFormat(input);
         Assert.assertEquals(expected, actual);
     }
 
     @Test
-    public void testPredixLayoutExceptionChainLog() throws IOException {
-        StackTraceElement[] caller = { new StackTraceElement(CLASS_NAME, METHOD_NAME, FILE_NAME, LINE_NUMBER) };
-        long timeStamp = Instant.now().toEpochMilli();
-        String expectedTimeStamp = this.simpleDateFormat.format(new Date(timeStamp));
-        HashMap<String, String> mdc = getMDC();
-        String msg = getMsg();
-        Throwable exceptionCause = new NullPointerException();
-        exceptionCause.setStackTrace(new StackTraceElement[] {
-                new StackTraceElement("com.ge.predix.some.package.Class", "method", "Class.java", 234),
-                new StackTraceElement("com.ge.predix.some.other.package.OtherClass", "diffMethod", "OtherClass.java",
-                        45) });
-        Throwable exceptionRoot = new Exception(exceptionCause);
+    public void testPredixEncoderWithException() throws IOException {
+
+        ILoggingEvent input = createLogEvent(MESSAGE_TEXT, null, THROWABLE);
+
+        String expected = getExpectedOutput(input.getTimeStamp(), MESSAGE_TEXT,
+                "[[\"java.lang.NullPointerException\"," + "\"at com.ge.predix.some.Class.method(Class.java:234)\","
+                        + "\"at com.ge.predix.some.other.OtherClass.otherMethod(OtherClass.java:45)\"]]");
+
+        String actual = encodeToPredixFormat(input);
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testPredixEncoderWithExceptionChain() throws IOException {
+
+        Throwable exceptionRoot = new Exception(THROWABLE);
         exceptionRoot.setStackTrace(new StackTraceElement[] {
-                new StackTraceElement("com.ge.predix.some.package.Clazz", "method", "Clazz.java", 473),
-                new StackTraceElement("com.ge.predix.some.other.package.OtherClazz", "diffMethod", "OtherClazz.java",
-                        55) });
-        Logger logger = new LoggerContext().getLogger(PredixEncoder.class);
-        LoggingEvent logEvent = new LoggingEvent(CLASS_NAME, logger, Level.ERROR, msg.toString(), null, null);
-        logEvent.setMDCPropertyMap(mdc);
-        logEvent.setThreadName("Thread1");
-        logEvent.setCallerData(caller);
-        logEvent.setTimeStamp(timeStamp);
-        logEvent.setThrowableProxy(new ThrowableProxy(exceptionRoot));
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        PrintStream os = new PrintStream(baos);
-        this.predixLayout.init(os);
-        this.predixLayout.doEncode(logEvent);
-        String actual = baos.toString();
+                new StackTraceElement("com.ge.predix.some.Clazz", "method", "Clazz.java", 473),
+                new StackTraceElement("com.ge.predix.some.other.OtherClazz", "otherMethod", "OtherClazz.java", 55) });
+        ILoggingEvent input = createLogEvent(MESSAGE_TEXT, null, exceptionRoot);
 
-        String expected = "{\"time\":\"" + expectedTimeStamp + "\",\"tnt\":\"" + ZONE_VALUE + "\",\"corr\":\""
-                + CORRELATION_VALUE + "\",\"appn\":\"" + APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE
-                + "\",\"inst\":\"" + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME + "\",\"mod\":\"" + FILE_NAME
-                + "\",\"lvl\":\"" + Level.ERROR.toString()
-                + "\",\"msg\":\"{width=4, length=3, units=inches, height=5}\",\"stck\":["
-                + "[\"java.lang.Exception: java.lang.NullPointerException\","
-                + "\"at com.ge.predix.some.package.Clazz.method(Clazz.java:473)\","
-                + "\"at com.ge.predix.some.other.package.OtherClazz.diffMethod(OtherClazz.java:55)\"],"
-                + "[\"java.lang.NullPointerException\",\"at com.ge.predix.some.package.Class.method(Class.java:234)\","
-                + "\"at com.ge.predix.some.other.package.OtherClass.diffMethod(OtherClass.java:45)\"]]}";
+        String expected = getExpectedOutput(input.getTimeStamp(), MESSAGE_TEXT,
+                "[[\"java.lang.Exception: java.lang.NullPointerException\","
+                        + "\"at com.ge.predix.some.Clazz.method(Clazz.java:473)\","
+                        + "\"at com.ge.predix.some.other.OtherClazz.otherMethod(OtherClazz.java:55)\"],"
+                        + "[\"java.lang.NullPointerException\","
+                        + "\"at com.ge.predix.some.Class.method(Class.java:234)\","
+                        + "\"at com.ge.predix.some.other.OtherClass.otherMethod(OtherClass.java:45)\"]]");
+
+        String actual = encodeToPredixFormat(input);
         Assert.assertEquals(expected, actual);
     }
 
     @Test
-    public void testPredixLayoutMissingInfoLog() throws IOException {
-        long timeStamp = Instant.now().toEpochMilli();
-        String expectedTimeStamp = this.simpleDateFormat.format(new Date(timeStamp));
-        HashMap<String, String> mdc = getMDC();
+    public void testPredixEncoderWithImplicitException() throws IOException {
+
+        ILoggingEvent input = createLogEvent(MESSAGE_TEXT, new Object[] { THROWABLE }, null);
+
+        String expected = getExpectedOutput(input.getTimeStamp(), MESSAGE_TEXT,
+                "[[\"java.lang.NullPointerException\"," + "\"at com.ge.predix.some.Class.method(Class.java:234)\","
+                        + "\"at com.ge.predix.some.other.OtherClass.otherMethod(OtherClass.java:45)\"]]");
+
+        String actual = encodeToPredixFormat(input);
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testPredixEncoderWithVariables() throws IOException {
+
+        ILoggingEvent input = createLogEvent(MESSAGE_FORMAT, MESSAGE_ARGS, null);
+
+        String expected = getExpectedOutput(input.getTimeStamp(), MESSAGE_TEXT, null);
+
+        String actual = encodeToPredixFormat(input);
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testPredixEncoderWithVariablesAndException() throws IOException {
+
+        ILoggingEvent input = createLogEvent(MESSAGE_FORMAT, MESSAGE_ARGS, THROWABLE);
+
+        String expected = getExpectedOutput(input.getTimeStamp(), MESSAGE_TEXT,
+                "[[\"java.lang.NullPointerException\"," + "\"at com.ge.predix.some.Class.method(Class.java:234)\","
+                        + "\"at com.ge.predix.some.other.OtherClass.otherMethod(OtherClass.java:45)\"]]");
+
+        String actual = encodeToPredixFormat(input);
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testPredixEncoderWithVariablesAndImplicitException() throws IOException {
+
+        ILoggingEvent input = createLogEvent(MESSAGE_FORMAT, MESSAGE_ARGS_WITH_THROWABLE, null);
+
+        String expected = getExpectedOutput(input.getTimeStamp(), MESSAGE_TEXT,
+                "[[\"java.lang.NullPointerException\"," + "\"at com.ge.predix.some.Class.method(Class.java:234)\","
+                        + "\"at com.ge.predix.some.other.OtherClass.otherMethod(OtherClass.java:45)\"]]");
+
+        String actual = encodeToPredixFormat(input);
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testPredixEncoderWithMissingInfo() throws IOException {
+
         Logger logger = new LoggerContext().getLogger(PredixEncoder.class);
-        LoggingEvent logEvent = new LoggingEvent(CLASS_NAME, logger, null, null, null, null);
-        logEvent.setMDCPropertyMap(mdc);
-        logEvent.setThreadName("Thread1");
-        logEvent.setCallerData(null);
-        logEvent.setTimeStamp(timeStamp);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        PrintStream os = new PrintStream(baos);
-        this.predixLayout.init(os);
-        this.predixLayout.doEncode(logEvent);
-        String actual = baos.toString();
-        String expected = "{\"time\":\"" + expectedTimeStamp + "\",\"tnt\":\"" + ZONE_VALUE + "\",\"corr\":\""
+        LoggingEvent input = new LoggingEvent(null, logger, null, null, null, null);
+        input.setTimeStamp(Instant.now().toEpochMilli());
+        input.setThreadName(THREAD_NAME);
+        input.setCallerData(null);
+        input.setMDCPropertyMap(MDC);
+
+        String expectedTimestamp = SIMPLE_DATE_FORMAT.format(new Date(input.getTimeStamp()));
+        String expected = "{\"time\":\"" + expectedTimestamp + "\",\"tnt\":\"" + ZONE_VALUE + "\",\"corr\":\""
                 + CORRELATION_VALUE + "\",\"appn\":\"" + APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE
                 + "\",\"inst\":\"" + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME
                 + "\",\"mod\":\"?\",\"msg\":null}";
+
+        String actual = encodeToPredixFormat(input);
         Assert.assertEquals(expected, actual);
     }
 
-    private String getMsg() {
-        HashMap<String, Object> msg = new HashMap<>();
-        msg.put("height", 5);
-        msg.put("width", 4);
-        msg.put("length", 3);
-        msg.put("units", "inches");
-        return msg.toString();
+    private static ILoggingEvent createLogEvent(final String message, final Object[] messageArgs,
+            final Throwable throwable) {
+
+        Logger logger = new LoggerContext().getLogger(PredixEncoder.class);
+        LoggingEvent logEvent = new LoggingEvent(null, logger, Level.INFO, message, throwable, messageArgs);
+        logEvent.setTimeStamp(Instant.now().toEpochMilli());
+        logEvent.setThreadName(THREAD_NAME);
+        logEvent.setCallerData(
+                new StackTraceElement[] { new StackTraceElement(CLASS_NAME, METHOD_NAME, FILE_NAME, LINE_NUMBER) });
+        logEvent.setMDCPropertyMap(MDC);
+        return logEvent;
     }
 
-    private HashMap<String, String> getMDC() {
-        HashMap<String, String> mdc = new HashMap<>();
-        mdc.put(CORRELATION_HEADER, CORRELATION_VALUE);
-        mdc.put(APP_ID, APP_ID_VALUE);
-        mdc.put(APP_NAME, APP_NAME_VALUE);
-        mdc.put(INSTANCE_ID, INSTANCE_ID_VALUE);
-        mdc.put(INSTANCE_INDEX, INSTANCE_INDEX_VALUE);
-        mdc.put(ZONE_HEADER, ZONE_VALUE);
-        return mdc;
+    private static String encodeToPredixFormat(final ILoggingEvent logEvent) throws IOException {
+
+        ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+        PrintStream printStream = new PrintStream(byteStream);
+        PREDIX_ENCODER.init(printStream);
+        PREDIX_ENCODER.doEncode(logEvent);
+        return byteStream.toString();
+    }
+
+    private static String getExpectedOutput(final long timestamp, final String message, final String stack) {
+
+        String expectedOutput = "{\"time\":\"" + SIMPLE_DATE_FORMAT.format(new Date(timestamp)) + "\",\"tnt\":\""
+                + ZONE_VALUE + "\",\"corr\":\"" + CORRELATION_VALUE + "\",\"appn\":\"" + APP_NAME_VALUE
+                + "\",\"dpmt\":\"" + APP_ID_VALUE + "\",\"inst\":\"" + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME
+                + "\",\"mod\":\"" + FILE_NAME + "\",\"lvl\":\"" + Level.INFO + "\",\"msg\":\"" + message + "\"";
+        if (stack != null) {
+            expectedOutput += ",\"stck\":" + stack;
+        }
+        expectedOutput += "}";
+        return expectedOutput;
     }
 }
