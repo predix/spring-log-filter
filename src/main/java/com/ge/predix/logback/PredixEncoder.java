@@ -24,13 +24,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import org.apache.commons.lang.StringUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
-import ch.qos.logback.classic.pattern.FileOfCallerConverter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.StackTraceElementProxy;
@@ -44,10 +45,22 @@ public class PredixEncoder<E extends ILoggingEvent> extends EncoderBase<E> {
         ISO_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
-    private static final FileOfCallerConverter FILE_OF_CALLER_CONVERTER = new FileOfCallerConverter();
     private static final ObjectWriter JSON_WRITER = new ObjectMapper().writer();
 
-    @Override
+    private Pattern messageLineSeparatorPattern = null;
+
+    public void setMessageLineSeparatorRegex(final String messageLineSeparatorRegex) {
+        messageLineSeparatorPattern = null;
+        if (messageLineSeparatorRegex != null) {
+            try {
+                messageLineSeparatorPattern = Pattern.compile(messageLineSeparatorRegex);
+            } catch (PatternSyntaxException pse) {
+                addWarn("Invalid message line separator: " + pse.getMessage());
+                addWarn("Log message lines will not be separated.");
+            }
+        }
+    }
+
     public void doEncode(final E event) throws IOException {
         Map<String, String> mdc = event.getMDCPropertyMap();
 
@@ -60,11 +73,16 @@ public class PredixEncoder<E extends ILoggingEvent> extends EncoderBase<E> {
         logFormat.put("dpmt", mdc.getOrDefault("APP_ID", ""));
         logFormat.put("inst", mdc.getOrDefault("INSTANCE_ID", ""));
         logFormat.put("tid", event.getThreadName());
-        logFormat.put("mod", FILE_OF_CALLER_CONVERTER.convert(event));
+        logFormat.put("mod", event.getLoggerName());
         if (null != event.getLevel()) {
             logFormat.put("lvl", event.getLevel().toString());
         }
-        logFormat.put("msg", event.getFormattedMessage());
+        final String message = event.getFormattedMessage();
+        if (message != null && messageLineSeparatorPattern != null) {
+            logFormat.put("msgLines", messageLineSeparatorPattern.split(message));
+        } else {
+            logFormat.put("msg", message);
+        }
         if (null != event.getThrowableProxy()) {
             logFormat.put("stck", getStackTrace(event));
         }

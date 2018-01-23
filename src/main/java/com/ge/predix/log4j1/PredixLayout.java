@@ -23,9 +23,13 @@ public class PredixLayout extends Layout {
 
     private final PredixLayoutPattern predixLayoutPattern = new PredixLayoutPattern();
 
+    public void setMessageLineSeparatorRegex(final String messageLineSeparatorRegex) {
+        predixLayoutPattern.setMessageLineSeparatorRegex(messageLineSeparatorRegex);
+    }
+
     @Override
     public String format(final LoggingEvent event) {
-        return this.predixLayoutPattern.convert(event);
+        return predixLayoutPattern.convert(event);
     }
 
     @Override

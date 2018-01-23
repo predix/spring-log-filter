@@ -24,8 +24,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.helpers.LogLog;
 import org.apache.log4j.helpers.PatternConverter;
 import org.apache.log4j.spi.LoggingEvent;
 
@@ -34,12 +37,25 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 
 public class PredixLayoutPattern extends PatternConverter {
 
-    public static final SimpleDateFormat ISO_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+    private static final SimpleDateFormat ISO_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+    static {
+        ISO_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
+    }
 
     private static final ObjectWriter JSON_WRITER = new ObjectMapper().writer();
 
-    public PredixLayoutPattern() {
-        ISO_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
+    private Pattern messageLineSeparatorPattern = null;
+
+    public void setMessageLineSeparatorRegex(final String messageLineSeparatorRegex) {
+        messageLineSeparatorPattern = null;
+        if (messageLineSeparatorRegex != null) {
+            try {
+                messageLineSeparatorPattern = Pattern.compile(messageLineSeparatorRegex);
+            } catch (PatternSyntaxException pse) {
+                LogLog.warn("Invalid message line separator: " + pse.getMessage());
+                LogLog.warn("Log message lines will not be separated.");
+            }
+        }
     }
 
     @Override
@@ -59,18 +75,22 @@ public class PredixLayoutPattern extends PatternConverter {
         if (null != event.getLevel()) {
             logFormat.put("lvl", event.getLevel().toString());
         }
-        logFormat.put("msg", event.getMessage());
+        final Object message = event.getMessage();
+        if (message instanceof String && messageLineSeparatorPattern != null) {
+            logFormat.put("msgLines", messageLineSeparatorPattern.split((String) message));
+        } else {
+            logFormat.put("msg", message);
+        }
         if (null != event.getThrowableInformation()) {
             logFormat.put("stck", getStackTrace(event));
         }
         try {
             return JSON_WRITER.writeValueAsString(logFormat) + "\n";
         } catch (IOException e) {
-            return "Failed to convert log to json for event: "
-                    + event.getMessage();
+            return "Failed to convert log to json for event: " + event.getMessage();
         }
     }
-    
+
     private List<List<String>> getStackTrace(final LoggingEvent event) {
         List<List<String>> exceptions = new ArrayList<>();
         Throwable throwable = event.getThrowableInformation().getThrowable();
@@ -87,5 +107,4 @@ public class PredixLayoutPattern extends PatternConverter {
 
         return exceptions;
     }
-
 }
