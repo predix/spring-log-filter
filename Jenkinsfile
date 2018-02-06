@@ -34,7 +34,7 @@ pipeline {
         }
         stage('Maven push if master') {
             when {
-                anyOf { branch 'master'; branch 'feature/jenkinsfile' }
+                anyOf { branch 'master' }
             }
             environment {
                 DEPLOY_CREDS = credentials('predix-artifactory-uploader')
