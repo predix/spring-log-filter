@@ -37,7 +37,7 @@ pipeline {
                 anyOf { branch 'master' }
             }
             environment {
-                DEPLOY_CREDS = credentials('predix-artifactory-uploader')
+                DEPLOY_CREDS = credentials('uaa-predix-artifactory-upload-credentials')
             }
             steps {
                 sh '''#!/bin/bash -ex
