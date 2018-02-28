@@ -16,9 +16,7 @@
 
 package com.ge.predix.logback;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Date;
@@ -85,6 +83,9 @@ public class PredixEncoderTest {
             + System.lineSeparator() + "L5{}L6{}L7\n{}";
     private static final Object[] MULTI_LINE_MESSAGE_ARGS = { "L4", "\n", System.lineSeparator(),
             "L8\nL9" + System.lineSeparator() + "L10" };
+
+    private static final LoggerContext loggerContext = new LoggerContext();
+    private static final Logger logger = loggerContext.getLogger(CLASS_NAME);
 
     @Test
     public void testPredixEncoderWithRegularMessage() throws IOException {
@@ -206,7 +207,7 @@ public class PredixEncoderTest {
         String expected = "{\"time\":\"" + expectedTimestamp + "\",\"tnt\":\"" + ZONE_VALUE + "\",\"corr\":\""
                 + CORRELATION_VALUE + "\",\"appn\":\"" + APP_NAME_VALUE + "\",\"dpmt\":\"" + APP_ID_VALUE
                 + "\",\"inst\":\"" + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME + "\",\"mod\":\"" + CLASS_NAME
-                + "\",\"msg\":null}";
+                + "\",\"msg\":null}" + System.lineSeparator();
 
         String actual = encodeToPredixFormat(input);
         Assert.assertEquals(expected, actual);
@@ -264,7 +265,6 @@ public class PredixEncoderTest {
     private static ILoggingEvent createLogEvent(final String message, final Object[] messageArgs,
             final Throwable throwable) {
 
-        Logger logger = new LoggerContext().getLogger(CLASS_NAME);
         LoggingEvent logEvent = new LoggingEvent(null, logger, Level.INFO, message, throwable, messageArgs);
         logEvent.setTimeStamp(Instant.now().toEpochMilli());
         logEvent.setThreadName(THREAD_NAME);
@@ -282,15 +282,11 @@ public class PredixEncoderTest {
     private String encodeToPredixFormat(final ILoggingEvent logEvent, final String messageLineSeparator)
             throws IOException {
 
-        try (ByteArrayOutputStream byteStream = new ByteArrayOutputStream()) {
-            try (PrintStream printStream = new PrintStream(byteStream)) {
-                PredixEncoder<ILoggingEvent> predixEncoder = new PredixEncoder<>();
-                predixEncoder.setMessageLineSeparatorRegex(messageLineSeparator);
-                predixEncoder.init(printStream);
-                predixEncoder.doEncode(logEvent);
-                return byteStream.toString();
-            }
-        }
+        PredixEncoder<ILoggingEvent> predixEncoder = new PredixEncoder<>();
+        predixEncoder.setContext(loggerContext);
+        predixEncoder.setMessageLineSeparatorRegex(messageLineSeparator);
+        byte[] bytes = predixEncoder.encode(logEvent);
+        return new String(bytes);
     }
 
     private static String getExpectedOutput(final long timestamp, final String message, final String stack) {
@@ -313,7 +309,7 @@ public class PredixEncoderTest {
         if (stack != null) {
             expectedOutput += ",\"stck\":" + stack;
         }
-        expectedOutput += "}";
+        expectedOutput += "}" + System.lineSeparator();
         return expectedOutput;
     }
 }
