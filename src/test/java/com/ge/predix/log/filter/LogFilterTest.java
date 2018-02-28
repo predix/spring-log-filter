@@ -16,7 +16,6 @@
 
 package com.ge.predix.log.filter;
 
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 
 import java.io.IOException;
@@ -212,8 +211,8 @@ public class LogFilterTest {
         Mockito.when(testEventWriter.process(any(AuditEvent.class))).thenAnswer(new Answer<Boolean>() {
             public Boolean answer(final InvocationOnMock invocation) {
                 AuditEvent event = (AuditEvent) invocation.getArguments()[0];
-                assertEquals(event.getRequestBody(), TEST_REQUEST_CONTENT);
-                assertEquals(event.getResponseBody(), TEST_RESPONSE_CONTENT);
+                Assert.assertEquals(event.getRequestBody(), TEST_REQUEST_CONTENT);
+                Assert.assertEquals(event.getResponseBody(), TEST_RESPONSE_CONTENT);
                 return true;
             }
         });

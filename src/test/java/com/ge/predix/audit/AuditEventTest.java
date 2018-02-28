@@ -16,8 +16,8 @@
 
 package com.ge.predix.audit;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 import java.io.IOException;
 import java.time.Instant;

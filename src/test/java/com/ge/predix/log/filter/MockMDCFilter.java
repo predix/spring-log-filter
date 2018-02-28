@@ -26,8 +26,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.MDC;
 import org.springframework.web.filter.OncePerRequestFilter;
-
-import junit.framework.Assert;
+import org.testng.Assert;
 
 //this filter is used in the testLogFilterAudit to test MDC values are set correctly
 public class MockMDCFilter extends OncePerRequestFilter {
