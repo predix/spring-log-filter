@@ -26,14 +26,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
 
-import org.junit.Test;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
-import junit.framework.Assert;
 
 public class PredixEncoderTest {
 

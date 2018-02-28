@@ -26,9 +26,8 @@ import org.apache.log4j.Level;
 import org.apache.log4j.spi.LocationInfo;
 import org.apache.log4j.spi.LoggingEvent;
 import org.apache.log4j.spi.ThrowableInformation;
-import org.junit.Test;
-
-import junit.framework.Assert;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 public class PredixLayoutTest {
 
