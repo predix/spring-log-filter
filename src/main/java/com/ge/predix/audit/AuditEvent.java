@@ -39,10 +39,12 @@ public class AuditEvent {
     private final Instant time;
     private final String requestUri;
     private final int status;
+    private final String grantType;
     private final String toString;
 
     public AuditEvent(final ContentCachingRequestWrapper requestWrapper,
-            final ContentCachingResponseWrapper responseWrapper, final String zoneId, final String correlationId)
+            final ContentCachingResponseWrapper responseWrapper, final String zoneId, final String correlationId,
+            final String grantType)
             throws JsonProcessingException {
         this.correlationId = correlationId;
         this.status = responseWrapper.getStatus();
@@ -50,6 +52,7 @@ public class AuditEvent {
         this.sourceIp = requestWrapper.getRemoteHost();
         this.zoneId = zoneId;
         this.time = Instant.now();
+        this.grantType = grantType;
         this.requestUri = requestWrapper.getRequestURI();
         this.requestBody = new String(requestWrapper.getContentAsByteArray());
         this.responseBody = new String(responseWrapper.getContentAsByteArray());
@@ -96,6 +99,10 @@ public class AuditEvent {
 
     public String getRequestUri() {
         return this.requestUri;
+    }
+
+    public String getGrantType() {
+        return this.grantType;
     }
 
 }

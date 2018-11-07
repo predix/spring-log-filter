@@ -48,6 +48,7 @@ public class LogFilter extends OncePerRequestFilter {
     private static final String INSTANCE_INDEX = "INSTANCE_INDEX";
     private static final String CORRELATION_HEADER_NAME = "X-B3-TraceId";
     private static final String ZONE_HEADER_NAME = "Zone-Id";
+    private static final String GRANT_TYPE_PARAMETER = "grant_type";
 
     @Value("${VCAP_APPLICATION:}")
     private String vcapApplicationEnvJson;
@@ -120,6 +121,7 @@ public class LogFilter extends OncePerRequestFilter {
         try {
             String correlationId = setCorrelationId(request, response);
             String zoneId = setZoneId(request);
+            String grantType = setGrantType(request);
             addVcapToMDC();
             addAppNameToMDC();
             if (null == this.auditProcessor) {
@@ -133,7 +135,7 @@ public class LogFilter extends OncePerRequestFilter {
 
                 // post request processing.
                 this.auditProcessor.process(new AuditEvent(cachedRequestWrapper,
-                        cachedResponseWrapper, zoneId, correlationId));
+                        cachedResponseWrapper, zoneId, correlationId, grantType));
                 copyBodyToResponse(cachedResponseWrapper);
             }
         } finally {
@@ -183,6 +185,14 @@ public class LogFilter extends OncePerRequestFilter {
             MDC.put(ZONE_HEADER_NAME, zoneId);
         }
         return zoneId;
+    }
+
+    private String setGrantType(final HttpServletRequest request) {
+        String grantType = request.getParameter(GRANT_TYPE_PARAMETER);
+        if (StringUtils.isNotEmpty(grantType)) {
+            MDC.put(GRANT_TYPE_PARAMETER, grantType);
+        }
+        return grantType;
     }
 
     private String setCorrelationId(final HttpServletRequest request, final HttpServletResponse response) {

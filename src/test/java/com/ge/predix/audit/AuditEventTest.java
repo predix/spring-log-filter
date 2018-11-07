@@ -54,7 +54,7 @@ public class AuditEventTest {
         cachedRequest.getReader().readLine();
         cachedResponse.getWriter().write(RESPONSE_BODY);
 
-        AuditEvent event = new AuditEvent(cachedRequest, cachedResponse, ZONE_ID, CORRELATION_VALUE);
+        AuditEvent event = new AuditEvent(cachedRequest, cachedResponse, ZONE_ID, CORRELATION_VALUE, null);
         // test that the time stamp on the Audit event is less then 250 ms from now
         assertTrue((Instant.now().toEpochMilli() - event.getTime().toEpochMilli()) < 250);
         assertEquals(event.getRequestUri(), URI);

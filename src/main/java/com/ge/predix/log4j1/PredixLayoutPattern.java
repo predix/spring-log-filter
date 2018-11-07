@@ -75,10 +75,14 @@ public class PredixLayoutPattern extends PatternConverter {
         if (null != event.getLevel()) {
             logFormat.put("lvl", event.getLevel().toString());
         }
-        final Object message = event.getMessage();
+        Object message = event.getMessage();
         if (message instanceof String && messageLineSeparatorPattern != null) {
             logFormat.put("msgLines", messageLineSeparatorPattern.split((String) message));
         } else {
+            final String grantType = (String) event.getMDC("grant_type");
+            if (StringUtils.isNotBlank(grantType)) {
+                message = (String) message + ", grantType=" + grantType;
+            }
             logFormat.put("msg", message);
         }
         if (null != event.getThrowableInformation()) {
