@@ -37,6 +37,36 @@ public class AuditEventTest {
     private static final String METHOD = "POST";
     private static final String REQUEST_BODY = "request content";
     private static final String RESPONSE_BODY = "response content";
+    private static final String CLIENT_CREDENTIALS = "Client_Credentials";
+
+    @Test
+    public void testAuditEventGrantType() throws IOException {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRequestURI(URI);
+        request.addHeader(CORRELATION_HEADER, CORRELATION_VALUE);
+        request.addParameter("grant_type", CLIENT_CREDENTIALS);
+        request.setMethod(METHOD);
+        request.setContent(REQUEST_BODY.getBytes());
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        ContentCachingRequestWrapper cachedRequest = new ContentCachingRequestWrapper(request);
+        ContentCachingResponseWrapper cachedResponse = new ContentCachingResponseWrapper(response);
+
+        // read from the request and write to the response to simulate what the controller will be doing
+        cachedRequest.getReader().readLine();
+        cachedResponse.getWriter().write(RESPONSE_BODY);
+
+        AuditEvent event = new AuditEvent(cachedRequest, cachedResponse, ZONE_ID, CORRELATION_VALUE, CLIENT_CREDENTIALS);
+        // test that the time stamp on the Audit event is less then 250 ms from now
+        assertTrue((Instant.now().toEpochMilli() - event.getTime().toEpochMilli()) < 250);
+        assertEquals(event.getRequestUri(), URI);
+        assertEquals(event.getZoneId(), ZONE_ID);
+        assertEquals(event.getCorrelationId(), CORRELATION_VALUE);
+        assertEquals(event.getMethod(), METHOD);
+        assertEquals(event.getRequestBody(), REQUEST_BODY);
+        assertEquals(event.getResponseBody(), RESPONSE_BODY);
+        assertEquals(event.getGrantType(), CLIENT_CREDENTIALS);
+    }
 
     @Test
     public void testAuditEvent() throws IOException {
@@ -54,7 +84,7 @@ public class AuditEventTest {
         cachedRequest.getReader().readLine();
         cachedResponse.getWriter().write(RESPONSE_BODY);
 
-        AuditEvent event = new AuditEvent(cachedRequest, cachedResponse, ZONE_ID, CORRELATION_VALUE, null);
+        AuditEvent event = new AuditEvent(cachedRequest, cachedResponse, ZONE_ID, CORRELATION_VALUE);
         // test that the time stamp on the Audit event is less then 250 ms from now
         assertTrue((Instant.now().toEpochMilli() - event.getTime().toEpochMilli()) < 250);
         assertEquals(event.getRequestUri(), URI);

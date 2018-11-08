@@ -60,6 +60,12 @@ public class AuditEvent {
 
     }
 
+    public AuditEvent(final ContentCachingRequestWrapper requestWrapper,
+            final ContentCachingResponseWrapper responseWrapper, final String zoneId, final String correlationId)
+            throws JsonProcessingException {
+        this(requestWrapper, responseWrapper, zoneId, correlationId, null);
+    }
+
     @Override
     public String toString() {
         return this.toString;
