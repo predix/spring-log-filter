@@ -53,7 +53,7 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <!-- Dependency Versions -->
         <commons-lang.version>2.6</commons-lang.version>
-        <spring-core.version>4.1.4.RELEASE</spring-core.version>
+        <spring-core.version>5.3.2</spring-core.version>
         <spring-data.version>1.9.1.RELEASE</spring-data.version>
         <spring-test.version>4.1.5.RELEASE</spring-test.version>
         <!-- Test Dependency Versions -->
