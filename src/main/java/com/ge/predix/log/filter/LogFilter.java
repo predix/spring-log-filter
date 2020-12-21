@@ -26,11 +26,11 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StreamUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.ContentCachingRequestWrapper;
 import org.springframework.web.util.ContentCachingResponseWrapper;
@@ -179,7 +179,7 @@ public class LogFilter extends OncePerRequestFilter {
 
     private String setZoneId(final HttpServletRequest request) {
         String zoneId = getZoneId(request);
-        if (StringUtils.isNotEmpty(zoneId)) {
+        if (!StringUtils.isEmpty(zoneId)) {
             MDC.put(ZONE_HEADER_NAME, zoneId);
         }
         return zoneId;
