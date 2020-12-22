@@ -89,11 +89,11 @@ This filter initializes an HTTP header(X-B3-TraceID) for tracing, if not already
 
 This information can be used by logging formatters to include in log messages. (see below)
 
-## logback configuration
+## Logback configuration
 
-[PredixEncoder.java](src/main/java/com/ge/predix/logback/PredixEncoder.java) formats the log in JSON and includes the cloudfoundry VCAP info listed in the section above.
+The [`PredixEncoder`](src/main/java/com/ge/predix/logback/PredixEncoder.java) formats the log in JSON and includes the cloudfoundry VCAP info listed in the section above.
 
-* Configure Logback to use PredixEncoder 
+* Configure `logback.xml` to use `PredixEncoder`:
   ```xml
   <appender name="myAppender" class="ch.qos.logback.core.ConsoleAppender">
       <encoder class="com.ge.predix.logback.PredixEncoder">
@@ -101,16 +101,26 @@ This information can be used by logging formatters to include in log messages. (
       </encoder>
   </appender>
   ```
-  * Encoder source -  [PredixEncoder.java](src/main/java/com/ge/predix/logback/PredixEncoder.java)
-  
-## log4j configuration
 
-[PredixLayoutPattern.java](src/main/java/com/ge/predix/log4j1/PredixLayoutPattern.java) formats the log in JSON and includes the cloudfoundry VCAP info listed in the section above.
+## Log4J 1.2 configuration
 
-* Configure log4j.properties to use PredixLayout
+The [`PredixLayout`](src/main/java/com/ge/predix/log4j1/PredixLayout.java) formats the log in JSON and includes the cloudfoundry VCAP info listed in the section above.
+
+* Configure `log4j.properties` to use `PredixLayout`:
   ```
   log4j.appender.CONSOLE.layout=com.ge.predix.log4j1.PredixLayout
   log4j.appender.CONSOLE.messageLineSeparatorRegex=\n //optional
+  ```
+
+## Log4J 2 configuration
+
+The [`PredixLayout`](src/main/java/com/ge/predix/log4j2/PredixLayout.java) formats the log in JSON and includes the cloudfoundry VCAP info listed in the section above.
+
+* Configure `log4j2.xml` to use `PredixLayout`:
+  ```xml
+  <Console name="CONSOLE" target="SYSTEM_OUT">
+      <PredixLayout messageLineSeparatorRegex="\n" />
+  </Console>
   ```
 
 # Multi-line message support
