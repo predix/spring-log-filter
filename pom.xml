@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
- - Copyright 2017 General Electric Company
+ - Copyright 2021 General Electric Company
  -
  - Licensed under the Apache License, Version 2.0 (the "License");
  - you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.ge.predix</groupId>
     <artifactId>spring-log-filter</artifactId>
-    <version>2.1.0-SNAPSHOT</version>
+    <version>3.0.0-SNAPSHOT</version>
     <name>Predix Spring Log Filter</name>
     <description>This library provides a spring filter that generates correlation ids to help trace issues in log files.</description>
     <packaging>jar</packaging>
@@ -52,10 +52,10 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <!-- Dependency Versions -->
-        <spring.version>4.1.4.RELEASE</spring.version>
+        <spring.version>5.3.4</spring.version>
         <!-- Test Dependency Versions -->
-        <mockito.version>1.9.0</mockito.version>
-        <testng.version>6.8</testng.version>
+        <mockito.version>1.10.19</mockito.version>
+        <testng.version>7.3.0</testng.version>
     </properties>
 
     <dependencies>
@@ -65,9 +65,14 @@
             <version>${spring.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>${spring.version}</version>
+        </dependency>
+        <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
-            <version>3.1.0</version>
+            <version>4.0.1</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

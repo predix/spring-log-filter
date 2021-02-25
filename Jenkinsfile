@@ -14,7 +14,7 @@ pipeline {
         }
     }
     stages {
-        stage('Test branch') {
+        stage('Build and Test') {
             steps {
                 checkout scm
                 dir('spring-filters-config') {
@@ -25,7 +25,7 @@ pipeline {
                     unset HTTPS_PROXY_PORT
                     unset HTTPS_PROXY_HOST
 
-                    mvn clean verify -s spring-filters-config/mvn_settings_noproxy.xml
+                    mvn clean verify -B -s spring-filters-config/mvn_settings_noproxy.xml
                 '''
                 // No Test reports
             }
