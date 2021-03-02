@@ -102,16 +102,6 @@ The [`PredixEncoder`](src/main/java/com/ge/predix/logback/PredixEncoder.java) fo
   </appender>
   ```
 
-## Log4J 1.2 configuration
-
-The [`PredixLayout`](src/main/java/com/ge/predix/log4j1/PredixLayout.java) formats the log in JSON and includes the cloudfoundry VCAP info listed in the section above.
-
-* Configure `log4j.properties` to use `PredixLayout`:
-  ```
-  log4j.appender.CONSOLE.layout=com.ge.predix.log4j1.PredixLayout
-  log4j.appender.CONSOLE.messageLineSeparatorRegex=\n //optional
-  ```
-
 ## Log4J 2 configuration
 
 The [`PredixLayout`](src/main/java/com/ge/predix/log4j2/PredixLayout.java) formats the log in JSON and includes the cloudfoundry VCAP info listed in the section above.

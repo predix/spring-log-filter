@@ -29,7 +29,6 @@ import java.util.UUID;
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 
-import org.apache.log4j.MDC;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
