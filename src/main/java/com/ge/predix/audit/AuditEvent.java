@@ -53,8 +53,8 @@ public class AuditEvent {
         this.requestUri = requestWrapper.getRequestURI();
         this.requestBody = new String(requestWrapper.getContentAsByteArray());
         this.responseBody = new String(responseWrapper.getContentAsByteArray());
-        this.toString = new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(this);
-
+        this.toString = new ObjectMapper().findAndRegisterModules()
+                .writerWithDefaultPrettyPrinter().writeValueAsString(this);
     }
 
     @Override
