@@ -47,7 +47,7 @@ public class PredixEncoderTest {
     private static final String NOT_AVAILABLE_FILE_NAME = null;
     private static final int NOT_AVAILABLE_LINE_NUMBER = -1;
 
-    private static final String CORRELATION_KEY = "X-B3-TraceId";
+    private static final String CORRELATION_KEY = "traceId";
     private static final String CORRELATION_KEY_OTHER = CORRELATION_KEY + "-Other";
     private static final String CORRELATION_VALUE = "5678";
     private static final String CORRELATION_VALUE_OTHER = CORRELATION_VALUE + "-Other";

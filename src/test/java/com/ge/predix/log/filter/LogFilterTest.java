@@ -24,13 +24,11 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.UUID;
 
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -47,7 +45,7 @@ public class LogFilterTest {
     private static final String TEST_REQUEST_CONTENT = "test-request-content";
 
     @Test
-    public void testLogFilterWithAcsHeader() throws Exception {
+    public void testLogFilterWithAcsHeader() {
         LogFilter logFilter = new LogFilter();
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Predix-Zone-Id", "log-test-zone");
@@ -57,7 +55,7 @@ public class LogFilterTest {
     }
 
     @Test
-    public void testLogFilterWithSubdomain() throws Exception {
+    public void testLogFilterWithSubdomain() {
         LogFilter logFilter = new LogFilter();
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setServerName("log-test-zone.localhost");
@@ -66,7 +64,7 @@ public class LogFilterTest {
     }
 
     @Test
-    public void testLogFilterWithSubdomainAndHeader() throws Exception {
+    public void testLogFilterWithSubdomainAndHeader() {
         LogFilter logFilter = new LogFilter();
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Predix-Zone-Id", "log-test-zone");
@@ -76,7 +74,7 @@ public class LogFilterTest {
     }
 
     @Test
-    public void testLogFilterWithTwoHeaders() throws Exception {
+    public void testLogFilterWithTwoHeaders() {
         LogFilter logFilter = new LogFilter();
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Predix-Zone-Id", "log-test-zone");
@@ -87,7 +85,7 @@ public class LogFilterTest {
     }
 
     @Test
-    public void testLogFilterWithEmptyHeaderWithSubdomain() throws Exception {
+    public void testLogFilterWithEmptyHeaderWithSubdomain() {
         LogFilter logFilter = new LogFilter();
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Predix-Zone-Id", "");
@@ -97,7 +95,7 @@ public class LogFilterTest {
     }
 
     @Test
-    public void testLogFilterWithEmptyHeaderAndNoSubdomain() throws Exception {
+    public void testLogFilterWithEmptyHeaderAndNoSubdomain() {
         LogFilter logFilter = new LogFilter();
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Predix-Zone-Id", "");
@@ -171,32 +169,11 @@ public class LogFilterTest {
     }
 
     @Test
-    public void testLogFilterWithCorrelationIdHeader() throws Exception {
-        LogFilter logFilter = new LogFilter();
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        String requestCorrelationId = UUID.randomUUID().toString();
-        request.addHeader("X-B3-TraceId", requestCorrelationId);
-        MockHttpServletResponse response = new MockHttpServletResponse();
-        logFilter.doFilter(request, response, new MockFilterChain());
-        String responseCorrelationId = response.getHeader("X-B3-TraceId");
-        Assert.assertEquals(requestCorrelationId, responseCorrelationId);
-    }
-
-    @Test
-    public void testLogFilterWithoutCorrelationIdHeader() throws Exception {
-        LogFilter logFilter = new LogFilter();
-        MockHttpServletResponse response = new MockHttpServletResponse();
-        logFilter.doFilter(new MockHttpServletRequest(), response, new MockFilterChain());
-        String responseCorrelationId = response.getHeader("X-B3-TraceId");
-        Assert.assertNotNull(responseCorrelationId);
-    }
-
-    @Test
     public void testLogFilterWithCustomAppName() throws Exception {
         LogFilter logFilter = new LogFilter();
         String appName = "custom app name";
         logFilter.setCustomAppName(appName);
-        Map<String, String> expectMap = new HashMap<String, String>();
+        Map<String, String> expectMap = new HashMap<>();
         expectMap.put("APP_NAME", "custom app name");
         
         Servlet mockServlet = Mockito.mock(Servlet.class);
@@ -207,14 +184,12 @@ public class LogFilterTest {
     @Test
     public void testLogFilterAudit() throws ServletException, IOException {
         AuditEventWriter testEventWriter = Mockito.mock(AuditEventWriter.class);
-        Mockito.when(testEventWriter.process(any(AuditEvent.class))).thenAnswer(new Answer<Boolean>() {
-            public Boolean answer(final InvocationOnMock invocation) {
-                AuditEvent event = (AuditEvent) invocation.getArguments()[0];
-                Assert.assertEquals(event.getRequestBody(), TEST_REQUEST_CONTENT);
-                Assert.assertEquals(event.getResponseBody(), TEST_RESPONSE_CONTENT);
-                return true;
-            }
-        });
+        Mockito.doAnswer(invocation -> {
+            AuditEvent event = (AuditEvent) invocation.getArguments()[0];
+            Assert.assertEquals(event.getRequestBody(), TEST_REQUEST_CONTENT);
+            Assert.assertEquals(event.getResponseBody(), TEST_RESPONSE_CONTENT);
+            return true;
+        }).when(testEventWriter).process(any(AuditEvent.class));
 
         LogFilter testLogFilter = new LogFilter();
         testLogFilter.setAuditProcessor(testEventWriter);

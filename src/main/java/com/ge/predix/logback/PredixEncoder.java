@@ -47,7 +47,7 @@ public class PredixEncoder<E extends ILoggingEvent> extends EncoderBase<E> {
         ISO_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
-    private static final String DEFAULT_CORRELATION_KEY = "X-B3-TraceId";
+    private static final String DEFAULT_CORRELATION_KEY = "traceId";
 
     private static final ObjectWriter JSON_WRITER = new ObjectMapper().writer();
 

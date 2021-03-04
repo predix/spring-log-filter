@@ -39,7 +39,7 @@ public class PredixLayoutTest {
         ISO_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
-    private static final String CORRELATION_KEY = "X-B3-TraceId";
+    private static final String CORRELATION_KEY = "traceId";
     private static final String CORRELATION_KEY_OTHER = CORRELATION_KEY + "-Other";
     private static final String CORRELATION_VALUE = "5678";
     private static final String CORRELATION_VALUE_OTHER = CORRELATION_VALUE + "-Other";
