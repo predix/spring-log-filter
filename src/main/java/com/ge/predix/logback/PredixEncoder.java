@@ -121,7 +121,7 @@ public class PredixEncoder<E extends ILoggingEvent> extends EncoderBase<E> {
 
         final String message = event.getFormattedMessage();
         if (message != null && messageLineSeparatorPattern != null) {
-            logFormat.put("msgLines", messageLineSeparatorPattern.split(message));
+            logFormat.put("msg", messageLineSeparatorPattern.split(message));
         } else {
             logFormat.put("msg", message);
         }
