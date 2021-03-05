@@ -92,6 +92,7 @@ The [`PredixEncoder`](src/main/java/com/ge/predix/logback/PredixEncoder.java) fo
   ```xml
   <appender name="myAppender" class="ch.qos.logback.core.ConsoleAppender">
       <encoder class="com.ge.predix.logback.PredixEncoder">
+          <tenantKey>tenant</tenantKey>
           <correlationKey>traceId</correlationKey>
           <messageLineSeparatorRegex>\n</messageLineSeparatorRegex>
       </encoder>
@@ -107,11 +108,20 @@ The [`PredixLayout`](src/main/java/com/ge/predix/log4j2/PredixLayout.java) forma
 * Configure `log4j2.xml` to use `PredixLayout`:
   ```xml
   <Console name="CONSOLE" target="SYSTEM_OUT">
-      <PredixLayout correlationKey="traceId" messageLineSeparatorRegex="\n" />
+      <PredixLayout tenantKey="tenant" correlationKey="traceId" messageLineSeparatorRegex="\n" />
   </Console>
   ```
 
 All properties are optional. See the following sections for more details.
+
+# Tenant field customization
+
+In the default mode, the logger populates the `tnt` field of the log using the `"Zone-Id"` attribute of the SLF4J MDC.
+This provides out-of-the-box integration with the `LogFilter`. See the section on [MDC enrichment](#mdc-enrichment)
+for more details.
+
+If tenant information is published to a different MDC field, the optional `tenantKey` property can be used to configure
+the alternate field. If this property is set, the `tnt` field of the log is populated with the value of that MDC field.
 
 # Correlation field customization
 

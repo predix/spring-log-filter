@@ -47,6 +47,7 @@ public class PredixEncoder<E extends ILoggingEvent> extends EncoderBase<E> {
         ISO_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
+    private static final String DEFAULT_TENANT_KEY = "Zone-Id";
     private static final String DEFAULT_CORRELATION_KEY = "traceId";
 
     private static final ObjectWriter JSON_WRITER = new ObjectMapper().writer();
@@ -54,8 +55,13 @@ public class PredixEncoder<E extends ILoggingEvent> extends EncoderBase<E> {
     private static final int INITIAL_BUFFER_SIZE = 1024;
     private static final byte[] EMPTY_BYTES = new byte[0];
 
+    private String tenantKey = DEFAULT_TENANT_KEY;
     private String correlationKey = DEFAULT_CORRELATION_KEY;
     private Pattern messageLineSeparatorPattern = null;
+
+    public void setTenantKey(final String tenantKey) {
+        this.tenantKey = StringUtils.hasText(tenantKey) ? tenantKey : DEFAULT_TENANT_KEY;
+    }
 
     public void setCorrelationKey(final String correlationKey) {
         this.correlationKey = StringUtils.hasText(correlationKey) ? correlationKey : DEFAULT_CORRELATION_KEY;
@@ -101,7 +107,7 @@ public class PredixEncoder<E extends ILoggingEvent> extends EncoderBase<E> {
         logFormat.put("time", ISO_DATE_FORMAT.format(new Date(event.getTimeStamp())));
 
         Map<String, String> mdc = event.getMDCPropertyMap();
-        logFormat.put("tnt", mdc.getOrDefault("Zone-Id", ""));
+        logFormat.put("tnt", mdc.getOrDefault(tenantKey, ""));
         logFormat.put("corr", mdc.getOrDefault(correlationKey, ""));
         logFormat.put("appn", mdc.get("APP_NAME"));
         logFormat.put("dpmt", mdc.getOrDefault("APP_ID", ""));

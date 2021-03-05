@@ -53,21 +53,26 @@ public final class PredixLayout extends AbstractStringLayout {
         ISO_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
+    private static final String DEFAULT_TENANT_KEY = "Zone-Id";
     private static final String DEFAULT_CORRELATION_KEY = "traceId";
 
     private static final ObjectWriter JSON_WRITER = new ObjectMapper().writer();
 
+    private final String tenantKey;
     private final String correlationKey;
     private final Pattern messageLineSeparatorPattern;
 
-    private PredixLayout(final String correlationKey, final Pattern messageLineSeparatorPattern) {
+    private PredixLayout(final String tenantKey, final String correlationKey,
+            final Pattern messageLineSeparatorPattern) {
         super(StandardCharsets.UTF_8);
+        this.tenantKey = tenantKey;
         this.correlationKey = correlationKey;
         this.messageLineSeparatorPattern = messageLineSeparatorPattern;
     }
 
     @PluginFactory
     public static PredixLayout createLayout(
+            @PluginAttribute("tenantKey") final String tenantKey,
             @PluginAttribute("correlationKey") final String correlationKey,
             @PluginAttribute("messageLineSeparatorRegex") final String messageLineSeparatorRegex) {
 
@@ -81,6 +86,7 @@ public final class PredixLayout extends AbstractStringLayout {
             }
         }
         return new PredixLayout(
+                StringUtils.hasText(tenantKey) ? tenantKey : DEFAULT_TENANT_KEY,
                 StringUtils.hasText(correlationKey) ? correlationKey : DEFAULT_CORRELATION_KEY,
                 messageLineSeparatorRegexPattern);
     }
@@ -91,7 +97,7 @@ public final class PredixLayout extends AbstractStringLayout {
         Map<String, Object> logFormat = new LinkedHashMap<>();
 
         logFormat.put("time", ISO_DATE_FORMAT.format(new Date(event.getTimeMillis())));
-        logFormat.put("tnt", event.getContextData().getValue("Zone-Id"));
+        logFormat.put("tnt", event.getContextData().getValue(tenantKey));
         logFormat.put("corr", event.getContextData().getValue(correlationKey));
         logFormat.put("appn", event.getContextData().getValue("APP_NAME"));
         logFormat.put("dpmt", event.getContextData().getValue("APP_ID"));
