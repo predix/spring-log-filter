@@ -16,7 +16,6 @@
 
 package com.ge.predix.logback;
 
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Date;
@@ -48,17 +47,22 @@ public class PredixEncoderTest {
     private static final String NOT_AVAILABLE_FILE_NAME = null;
     private static final int NOT_AVAILABLE_LINE_NUMBER = -1;
 
-    private static final String ZONE_VALUE = "test-zone";
+    private static final String CORRELATION_KEY = "X-B3-TraceId";
+    private static final String CORRELATION_KEY_OTHER = CORRELATION_KEY + "-Other";
     private static final String CORRELATION_VALUE = "5678";
+    private static final String CORRELATION_VALUE_OTHER = CORRELATION_VALUE + "-Other";
+
+    private static final String ZONE_VALUE = "test-zone";
     private static final String APP_NAME_VALUE = "uaa";
     private static final String APP_ID_VALUE = "098877475";
     private static final String INSTANCE_ID_VALUE = "6758302";
     private static final String INSTANCE_INDEX_VALUE = "5";
+
     private static final Map<String, String> MDC;
     static {
         MDC = new HashMap<>();
         MDC.put("Zone-Id", ZONE_VALUE);
-        MDC.put("X-B3-TraceId", CORRELATION_VALUE);
+        MDC.put(CORRELATION_KEY, CORRELATION_VALUE);
         MDC.put("APP_NAME", APP_NAME_VALUE);
         MDC.put("APP_ID", APP_ID_VALUE);
         MDC.put("INSTANCE_ID", INSTANCE_ID_VALUE);
@@ -88,7 +92,7 @@ public class PredixEncoderTest {
     private static final Logger logger = loggerContext.getLogger(CLASS_NAME);
 
     @Test
-    public void testPredixEncoderWithRegularMessage() throws IOException {
+    public void testPredixEncoderWithRegularMessage() {
 
         ILoggingEvent input = createLogEvent(MESSAGE_TEXT, null, null);
 
@@ -99,7 +103,7 @@ public class PredixEncoderTest {
     }
 
     @Test
-    public void testPredixEncoderWithSpecialChars() throws IOException {
+    public void testPredixEncoderWithSpecialChars() {
 
         ILoggingEvent input = createLogEvent("\"{}\n,\"\\", null, null);
 
@@ -110,7 +114,7 @@ public class PredixEncoderTest {
     }
 
     @Test
-    public void testPredixEncoderWithException() throws IOException {
+    public void testPredixEncoderWithException() {
 
         ILoggingEvent input = createLogEvent(MESSAGE_TEXT, null, THROWABLE);
 
@@ -123,7 +127,7 @@ public class PredixEncoderTest {
     }
 
     @Test
-    public void testPredixEncoderWithExceptionChain() throws IOException {
+    public void testPredixEncoderWithExceptionChain() {
 
         Throwable exceptionRoot = new Exception(THROWABLE);
         exceptionRoot.setStackTrace(new StackTraceElement[] {
@@ -144,7 +148,7 @@ public class PredixEncoderTest {
     }
 
     @Test
-    public void testPredixEncoderWithImplicitException() throws IOException {
+    public void testPredixEncoderWithImplicitException() {
 
         ILoggingEvent input = createLogEvent(MESSAGE_TEXT, new Object[] { THROWABLE }, null);
 
@@ -157,7 +161,7 @@ public class PredixEncoderTest {
     }
 
     @Test
-    public void testPredixEncoderWithVariables() throws IOException {
+    public void testPredixEncoderWithVariables() {
 
         ILoggingEvent input = createLogEvent(MESSAGE_FORMAT, MESSAGE_ARGS, null);
 
@@ -168,7 +172,7 @@ public class PredixEncoderTest {
     }
 
     @Test
-    public void testPredixEncoderWithVariablesAndException() throws IOException {
+    public void testPredixEncoderWithVariablesAndException() {
 
         ILoggingEvent input = createLogEvent(MESSAGE_FORMAT, MESSAGE_ARGS, THROWABLE);
 
@@ -181,7 +185,7 @@ public class PredixEncoderTest {
     }
 
     @Test
-    public void testPredixEncoderWithVariablesAndImplicitException() throws IOException {
+    public void testPredixEncoderWithVariablesAndImplicitException() {
 
         ILoggingEvent input = createLogEvent(MESSAGE_FORMAT, MESSAGE_ARGS_WITH_THROWABLE, null);
 
@@ -194,7 +198,7 @@ public class PredixEncoderTest {
     }
 
     @Test
-    public void testPredixEncoderWithMissingInfo() throws IOException {
+    public void testPredixEncoderWithMissingInfo() {
 
         Logger logger = new LoggerContext().getLogger(CLASS_NAME);
         LoggingEvent input = new LoggingEvent(null, logger, null, null, null, null);
@@ -214,7 +218,7 @@ public class PredixEncoderTest {
     }
 
     @Test
-    public void testPredixEncoderWithNoMessageLineSeparator() throws IOException {
+    public void testPredixEncoderWithNoMessageLineSeparator() {
 
         ILoggingEvent input = createLogEvent(MULTI_LINE_MESSAGE_FORMAT, MULTI_LINE_MESSAGE_ARGS, null);
 
@@ -226,7 +230,7 @@ public class PredixEncoderTest {
     }
 
     @Test
-    public void testPredixEncoderWithInvalidMessageLineSeparator() throws IOException {
+    public void testPredixEncoderWithInvalidMessageLineSeparator() {
 
         ILoggingEvent input = createLogEvent(MULTI_LINE_MESSAGE_FORMAT, MULTI_LINE_MESSAGE_ARGS, null);
 
@@ -234,56 +238,125 @@ public class PredixEncoderTest {
         String expected = getExpectedOutput(input.getTimeStamp(),
                 "\"L1\\nL2\\nL3\\nL4\\nL5\\nL6\\nL7\\nL8\\nL9\\nL10\"", null);
 
-        String actual = encodeToPredixFormat(input, "("); // Malformed regex
+        String actual = encodeToPredixFormat(input, null, "("); // Malformed regex
         Assert.assertEquals(expected, actual);
     }
 
     @Test
-    public void testPredixEncoderWithSimpleMessageLineSeparator() throws IOException {
+    public void testPredixEncoderWithSimpleMessageLineSeparator() {
 
         ILoggingEvent input = createLogEvent(MULTI_LINE_MESSAGE_FORMAT, MULTI_LINE_MESSAGE_ARGS, null);
 
-        String expected = getExpectedOutput(input.getTimeStamp(),
+        String expected = getExpectedOutput(input.getTimeStamp(), CORRELATION_VALUE,
                 "[\"L1\",\"L2\",\"L3\",\"L4\",\"L5\",\"L6\",\"L7\",\"L8\",\"L9\",\"L10\"]", true, null);
 
-        String actual = encodeToPredixFormat(input, System.lineSeparator());
+        String actual = encodeToPredixFormat(input, null, System.lineSeparator());
         Assert.assertEquals(expected, actual);
     }
 
     @Test
-    public void testPredixEncoderWithRegexMessageLineSeparator() throws IOException {
+    public void testPredixEncoderWithRegexMessageLineSeparator() {
 
         ILoggingEvent input = createLogEvent(MULTI_LINE_MESSAGE_FORMAT, MULTI_LINE_MESSAGE_ARGS, null);
 
-        String expected = getExpectedOutput(input.getTimeStamp(),
+        String expected = getExpectedOutput(input.getTimeStamp(), CORRELATION_VALUE,
                 "[\"L\",\"L\",\"L\",\"L\",\"L\",\"L\",\"L\",\"L\",\"L\",\"L\"]", true, null);
 
-        String actual = encodeToPredixFormat(input, "[0-9]+\n?");
+        String actual = encodeToPredixFormat(input, null, "[0-9]+\n?");
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testPredixEncoderWithCustomCorrelationKey() {
+
+        Map<String, String> mdc = new HashMap<>(MDC);
+        mdc.remove(CORRELATION_KEY);
+        mdc.put(CORRELATION_KEY_OTHER, CORRELATION_VALUE_OTHER);
+
+        ILoggingEvent input = createLogEvent(MESSAGE_TEXT, null, null, mdc);
+
+        String expected = getExpectedOutput(input.getTimeStamp(), CORRELATION_VALUE_OTHER, MESSAGE_OUTPUT, false, null);
+
+        String actual = encodeToPredixFormat(input, CORRELATION_KEY_OTHER, null);
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testPredixEncoderWithMissingCustomCorrelationKey() {
+
+        Map<String, String> mdc = new HashMap<>(MDC);
+        mdc.remove(CORRELATION_KEY);
+
+        ILoggingEvent input = createLogEvent(MESSAGE_TEXT, null, null, mdc);
+
+        String expected = getExpectedOutput(input.getTimeStamp(), "", MESSAGE_OUTPUT, false, null);
+
+        String actual = encodeToPredixFormat(input, CORRELATION_KEY_OTHER, null);
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testPredixEncoderWithMissingCustomCorrelationKeyDoesNotUseDefaultCorrelationKey() {
+
+        ILoggingEvent input = createLogEvent(MESSAGE_TEXT, null, null);
+
+        String expected = getExpectedOutput(input.getTimeStamp(), "", MESSAGE_OUTPUT, false, null);
+
+        String actual = encodeToPredixFormat(input, CORRELATION_KEY_OTHER, null);
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testPredixEncoderWithEmptyCustomCorrelationKeyUsesDefaultCorrelationKey() {
+
+        ILoggingEvent input = createLogEvent(MESSAGE_TEXT, null, null);
+
+        String expected = getExpectedOutput(input.getTimeStamp(), MESSAGE_OUTPUT, null);
+
+        String actual = encodeToPredixFormat(input, "", null);
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testPredixEncoderWithBlankCustomCorrelationKeyUsesDefaultCorrelationKey() {
+
+        ILoggingEvent input = createLogEvent(MESSAGE_TEXT, null, null);
+
+        String expected = getExpectedOutput(input.getTimeStamp(), MESSAGE_OUTPUT, null);
+
+        String actual = encodeToPredixFormat(input, "    ", null);
         Assert.assertEquals(expected, actual);
     }
 
     private static ILoggingEvent createLogEvent(final String message, final Object[] messageArgs,
             final Throwable throwable) {
 
+        return createLogEvent(message, messageArgs, throwable, MDC);
+    }
+
+    private static ILoggingEvent createLogEvent(final String message, final Object[] messageArgs,
+            final Throwable throwable, Map<String, String> mdc) {
+
         LoggingEvent logEvent = new LoggingEvent(null, logger, Level.INFO, message, throwable, messageArgs);
         logEvent.setTimeStamp(Instant.now().toEpochMilli());
         logEvent.setThreadName(THREAD_NAME);
         logEvent.setCallerData(new StackTraceElement[] {
                 new StackTraceElement(CLASS_NAME, METHOD_NAME, NOT_AVAILABLE_FILE_NAME, NOT_AVAILABLE_LINE_NUMBER) });
-        logEvent.setMDCPropertyMap(MDC);
+        logEvent.setMDCPropertyMap(mdc);
         return logEvent;
     }
 
-    private String encodeToPredixFormat(final ILoggingEvent logEvent) throws IOException {
+    private String encodeToPredixFormat(final ILoggingEvent logEvent) {
 
-        return encodeToPredixFormat(logEvent, null);
+        return encodeToPredixFormat(logEvent, null, null);
     }
 
-    private String encodeToPredixFormat(final ILoggingEvent logEvent, final String messageLineSeparator)
-            throws IOException {
+    private String encodeToPredixFormat(final ILoggingEvent logEvent,
+            final String correlationKey, final String messageLineSeparator) {
 
         PredixEncoder<ILoggingEvent> predixEncoder = new PredixEncoder<>();
         predixEncoder.setContext(loggerContext);
+        predixEncoder.setCorrelationKey(correlationKey);
         predixEncoder.setMessageLineSeparatorRegex(messageLineSeparator);
         byte[] bytes = predixEncoder.encode(logEvent);
         return new String(bytes);
@@ -291,14 +364,14 @@ public class PredixEncoderTest {
 
     private static String getExpectedOutput(final long timestamp, final String message, final String stack) {
 
-        return getExpectedOutput(timestamp, message, false, stack);
+        return getExpectedOutput(timestamp, CORRELATION_VALUE, message, false, stack);
     }
 
-    private static String getExpectedOutput(final long timestamp, final String message, final boolean multiLine,
-            final String stack) {
+    private static String getExpectedOutput(final long timestamp, final String correlationValue,
+            final String message, final boolean multiLine, final String stack) {
 
         String expectedOutput = "{\"time\":\"" + ISO_DATE_FORMAT.format(new Date(timestamp)) + "\",\"tnt\":\""
-                + ZONE_VALUE + "\",\"corr\":\"" + CORRELATION_VALUE + "\",\"appn\":\"" + APP_NAME_VALUE
+                + ZONE_VALUE + "\",\"corr\":\"" + correlationValue + "\",\"appn\":\"" + APP_NAME_VALUE
                 + "\",\"dpmt\":\"" + APP_ID_VALUE + "\",\"inst\":\"" + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME
                 + "\",\"mod\":\"" + CLASS_NAME + "\",\"lvl\":\"" + Level.INFO + "\"";
         if (multiLine) {

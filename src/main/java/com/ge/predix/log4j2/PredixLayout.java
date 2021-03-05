@@ -53,17 +53,22 @@ public final class PredixLayout extends AbstractStringLayout {
         ISO_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
+    private static final String DEFAULT_CORRELATION_KEY = "X-B3-TraceId";
+
     private static final ObjectWriter JSON_WRITER = new ObjectMapper().writer();
 
+    private final String correlationKey;
     private final Pattern messageLineSeparatorPattern;
 
-    private PredixLayout(final Pattern messageLineSeparatorPattern) {
+    private PredixLayout(final String correlationKey, final Pattern messageLineSeparatorPattern) {
         super(StandardCharsets.UTF_8);
+        this.correlationKey = correlationKey;
         this.messageLineSeparatorPattern = messageLineSeparatorPattern;
     }
 
     @PluginFactory
     public static PredixLayout createLayout(
+            @PluginAttribute("correlationKey") final String correlationKey,
             @PluginAttribute("messageLineSeparatorRegex") final String messageLineSeparatorRegex) {
 
         Pattern messageLineSeparatorRegexPattern = null;
@@ -75,7 +80,9 @@ public final class PredixLayout extends AbstractStringLayout {
                 STATUS_LOGGER.warn("Log message lines will not be separated.");
             }
         }
-        return new PredixLayout(messageLineSeparatorRegexPattern);
+        return new PredixLayout(
+                StringUtils.hasText(correlationKey) ? correlationKey : DEFAULT_CORRELATION_KEY,
+                messageLineSeparatorRegexPattern);
     }
 
     @Override
@@ -85,7 +92,7 @@ public final class PredixLayout extends AbstractStringLayout {
 
         logFormat.put("time", ISO_DATE_FORMAT.format(new Date(event.getTimeMillis())));
         logFormat.put("tnt", event.getContextData().getValue("Zone-Id"));
-        logFormat.put("corr", event.getContextData().getValue("X-B3-TraceId"));
+        logFormat.put("corr", event.getContextData().getValue(correlationKey));
         logFormat.put("appn", event.getContextData().getValue("APP_NAME"));
         logFormat.put("dpmt", event.getContextData().getValue("APP_ID"));
         logFormat.put("inst", event.getContextData().getValue("INSTANCE_ID"));
@@ -120,7 +127,7 @@ public final class PredixLayout extends AbstractStringLayout {
         while (throwable != null) {
             List<String> stack = new ArrayList<>();
             stack.add(throwable.getClass().getName()
-                    + (!StringUtils.isEmpty(throwable.getMessage()) ? ": " + throwable.getMessage() : ""));
+                    + (StringUtils.hasLength(throwable.getMessage()) ? ": " + throwable.getMessage() : ""));
             for (StackTraceElement element : throwable.getStackTrace()) {
                 stack.add("at " + element.toString());
             }
