@@ -47,12 +47,19 @@ public class PredixEncoder<E extends ILoggingEvent> extends EncoderBase<E> {
         ISO_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
+    private static final String DEFAULT_CORRELATION_KEY = "traceId";
+
     private static final ObjectWriter JSON_WRITER = new ObjectMapper().writer();
 
     private static final int INITIAL_BUFFER_SIZE = 1024;
     private static final byte[] EMPTY_BYTES = new byte[0];
 
+    private String correlationKey = DEFAULT_CORRELATION_KEY;
     private Pattern messageLineSeparatorPattern = null;
+
+    public void setCorrelationKey(final String correlationKey) {
+        this.correlationKey = StringUtils.hasText(correlationKey) ? correlationKey : DEFAULT_CORRELATION_KEY;
+    }
 
     public void setMessageLineSeparatorRegex(final String messageLineSeparatorRegex) {
         messageLineSeparatorPattern = null;
@@ -95,7 +102,7 @@ public class PredixEncoder<E extends ILoggingEvent> extends EncoderBase<E> {
 
         Map<String, String> mdc = event.getMDCPropertyMap();
         logFormat.put("tnt", mdc.getOrDefault("Zone-Id", ""));
-        logFormat.put("corr", mdc.getOrDefault("X-B3-TraceId", ""));
+        logFormat.put("corr", mdc.getOrDefault(correlationKey, ""));
         logFormat.put("appn", mdc.get("APP_NAME"));
         logFormat.put("dpmt", mdc.getOrDefault("APP_ID", ""));
         logFormat.put("inst", mdc.getOrDefault("INSTANCE_ID", ""));
@@ -129,7 +136,7 @@ public class PredixEncoder<E extends ILoggingEvent> extends EncoderBase<E> {
         while (throwable != null) {
             List<String> stack = new ArrayList<>();
             stack.add(throwable.getClassName()
-                    + (!StringUtils.isEmpty(throwable.getMessage()) ? ": " + throwable.getMessage() : ""));
+                    + (StringUtils.hasLength(throwable.getMessage()) ? ": " + throwable.getMessage() : ""));
             for (StackTraceElementProxy element : throwable.getStackTraceElementProxyArray()) {
                 stack.add(element.toString());
             }

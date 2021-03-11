@@ -18,10 +18,6 @@ Utility  for request tracing, log enrichment and auditing.
 
 # HTTP Request tracing
 
-## Populate zipkin HTTP headers for [tracing](opentracing.io)
-
-This filter initializes an HTTP header(X-B3-TraceID) for tracing, if not already present. The header is also added in the returned response.  Note that if you are already using another library for propogating headers, this will have no effect.
-
 * You will need to configure the following bean to specify how the filter determines tenant in a request
   ```xml
   <bean id="logFilter" class="com.ge.predix.log.filter.LogFilter">
@@ -73,8 +69,8 @@ This filter initializes an HTTP header(X-B3-TraceID) for tracing, if not already
 
 ## MDC enrichment
 
-* LogFilter enriches SLF4J [MDC](https://logback.qos.ch/manual/mdc.html) with tracing and cloudfoundry VCAP info
-   * The log filter adds the following VCAP information to the MDC. 
+* LogFilter enriches SLF4J [MDC](https://logback.qos.ch/manual/mdc.html) with Cloud Foundry VCAP information.
+   * The log filter adds the following VCAP information to the MDC:
       ```
       APP_ID
       APP_NAME
@@ -83,7 +79,6 @@ This filter initializes an HTTP header(X-B3-TraceID) for tracing, if not already
       * APP_NAME value can be customized using LogFilter.setCustomAppName
     * It also adds the following from HTTP headers:
       ```
-      X-B3-TraceId
       Zone-Id
       ```
 
@@ -97,10 +92,13 @@ The [`PredixEncoder`](src/main/java/com/ge/predix/logback/PredixEncoder.java) fo
   ```xml
   <appender name="myAppender" class="ch.qos.logback.core.ConsoleAppender">
       <encoder class="com.ge.predix.logback.PredixEncoder">
-          <messageLineSeparatorRegex>\n</messageLineSeparatorRegex> <!-- optional -->
+          <correlationKey>traceId</correlationKey>
+          <messageLineSeparatorRegex>\n</messageLineSeparatorRegex>
       </encoder>
   </appender>
   ```
+
+All properties are optional. See the following sections for more details.
 
 ## Log4J 2 configuration
 
@@ -109,9 +107,19 @@ The [`PredixLayout`](src/main/java/com/ge/predix/log4j2/PredixLayout.java) forma
 * Configure `log4j2.xml` to use `PredixLayout`:
   ```xml
   <Console name="CONSOLE" target="SYSTEM_OUT">
-      <PredixLayout messageLineSeparatorRegex="\n" />
+      <PredixLayout correlationKey="traceId" messageLineSeparatorRegex="\n" />
   </Console>
   ```
+
+All properties are optional. See the following sections for more details.
+
+# Correlation field customization
+
+In the default mode, the logger populates the `corr` field of the log using the `"traceId"` attribute of the SLF4J MDC.
+This provides out-of-the-box integration with [OpenTelemetry](https://opentelemetry.io) and [Spring Cloud Sleuth](https://docs.spring.io/spring-cloud-sleuth/docs/current/reference/html/project-features.html#features-log-integration).
+
+If correlation information is published to a different MDC field, the optional `correlationKey` property can be used to configure
+the alternate field. If this property is set, the `corr` field of the log is populated with the value of that MDC field.
 
 # Multi-line message support
 

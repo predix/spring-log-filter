@@ -19,7 +19,6 @@ package com.ge.predix.log.filter;
 import java.io.IOException;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.UUID;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -46,7 +45,6 @@ public class LogFilter extends OncePerRequestFilter {
     private static final String APP_NAME = "APP_NAME";
     private static final String INSTANCE_ID = "INSTANCE_ID";
     private static final String INSTANCE_INDEX = "INSTANCE_INDEX";
-    private static final String CORRELATION_HEADER_NAME = "X-B3-TraceId";
     private static final String ZONE_HEADER_NAME = "Zone-Id";
 
     @Value("${VCAP_APPLICATION:}")
@@ -118,7 +116,6 @@ public class LogFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         try {
-            String correlationId = setCorrelationId(request, response);
             String zoneId = setZoneId(request);
             addVcapToMDC();
             addAppNameToMDC();
@@ -132,8 +129,7 @@ public class LogFilter extends OncePerRequestFilter {
                 filterChain.doFilter(cachedRequestWrapper, cachedResponseWrapper);
 
                 // post request processing.
-                this.auditProcessor.process(new AuditEvent(cachedRequestWrapper,
-                        cachedResponseWrapper, zoneId, correlationId));
+                this.auditProcessor.process(new AuditEvent(cachedRequestWrapper, cachedResponseWrapper, zoneId));
                 copyBodyToResponse(cachedResponseWrapper);
             }
         } finally {
@@ -147,9 +143,8 @@ public class LogFilter extends OncePerRequestFilter {
         MDC.remove(INSTANCE_ID);
         MDC.remove(INSTANCE_INDEX);
         MDC.remove(ZONE_HEADER_NAME);
-        MDC.remove(CORRELATION_HEADER_NAME);
     }
-    
+
     private void addAppNameToMDC() {
         if (customAppName != null) {
             MDC.put(APP_NAME, customAppName);
@@ -185,16 +180,6 @@ public class LogFilter extends OncePerRequestFilter {
         return zoneId;
     }
 
-    private String setCorrelationId(final HttpServletRequest request, final HttpServletResponse response) {
-        String correlationId = request.getHeader(CORRELATION_HEADER_NAME);
-        if (StringUtils.isEmpty(correlationId)) {
-            correlationId = UUID.randomUUID().toString();
-        }
-        MDC.put(CORRELATION_HEADER_NAME, correlationId);
-        response.setHeader(CORRELATION_HEADER_NAME, correlationId);
-        return correlationId;
-    }
-
     String getZoneId(final HttpServletRequest request) {
         String zoneId = null;
         for (String zoneIdHeader : this.zoneHeaders) {
@@ -223,7 +208,6 @@ public class LogFilter extends OncePerRequestFilter {
         this.auditProcessor = auditProcessor;
     }
     
-
     public String getCustomAppName() {
         return customAppName;
     }
@@ -232,7 +216,6 @@ public class LogFilter extends OncePerRequestFilter {
         this.customAppName = customAppName;
     }
 
-    
     @Override
     public void afterPropertiesSet() {
         this.setVcapApplication(this.vcapApplicationEnvJson);
