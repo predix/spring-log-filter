@@ -263,7 +263,7 @@ public class PredixLayoutTest {
                 + TENANT_VALUE + "\",\"corr\":\"" + CORRELATION_VALUE + "\",\"appn\":\"" + APP_NAME_VALUE
                 + "\",\"dpmt\":\"" + APP_ID_VALUE + "\",\"inst\":\"" + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME
                 + "\",\"mod\":\"" + LOGGER_NAME + "\",\"lvl\":\"" + Level.INFO
-                + "\",\"msgLines\":[\"L1\",\"L2\",\"L3\"]}\n";
+                + "\",\"msg\":[\"L1\",\"L2\",\"L3\"]}\n";
 
         PredixLayout multiLinePredixLayout = PredixLayout.createLayout(null, null, System.lineSeparator());
         String actual = multiLinePredixLayout.toSerializable(input);
@@ -279,7 +279,7 @@ public class PredixLayoutTest {
         String expected = "{\"time\":\"" + ISO_DATE_FORMAT.format(new Date(input.getTimeMillis())) + "\",\"tnt\":\""
                 + TENANT_VALUE + "\",\"corr\":\"" + CORRELATION_VALUE + "\",\"appn\":\"" + APP_NAME_VALUE
                 + "\",\"dpmt\":\"" + APP_ID_VALUE + "\",\"inst\":\"" + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME
-                + "\",\"mod\":\"" + LOGGER_NAME + "\",\"lvl\":\"" + Level.INFO + "\",\"msgLines\":[\"L\",\"L\",\"L\"]}\n";
+                + "\",\"mod\":\"" + LOGGER_NAME + "\",\"lvl\":\"" + Level.INFO + "\",\"msg\":[\"L\",\"L\",\"L\"]}\n";
 
         PredixLayout multiLinePredixLayout = PredixLayout.createLayout(null, null, "[0-9]+\n?");
         String actual = multiLinePredixLayout.toSerializable(input);

@@ -252,7 +252,7 @@ public class PredixEncoderTest {
         ILoggingEvent input = createLogEvent(MULTI_LINE_MESSAGE_FORMAT, MULTI_LINE_MESSAGE_ARGS, null);
 
         String expected = getExpectedOutput(input.getTimeStamp(), TENANT_VALUE, CORRELATION_VALUE,
-                "[\"L1\",\"L2\",\"L3\",\"L4\",\"L5\",\"L6\",\"L7\",\"L8\",\"L9\",\"L10\"]", true, null);
+                "[\"L1\",\"L2\",\"L3\",\"L4\",\"L5\",\"L6\",\"L7\",\"L8\",\"L9\",\"L10\"]", null);
 
         String actual = encodeToPredixFormat(input, null, null, System.lineSeparator());
         Assert.assertEquals(expected, actual);
@@ -264,7 +264,7 @@ public class PredixEncoderTest {
         ILoggingEvent input = createLogEvent(MULTI_LINE_MESSAGE_FORMAT, MULTI_LINE_MESSAGE_ARGS, null);
 
         String expected = getExpectedOutput(input.getTimeStamp(), TENANT_VALUE, CORRELATION_VALUE,
-                "[\"L\",\"L\",\"L\",\"L\",\"L\",\"L\",\"L\",\"L\",\"L\",\"L\"]", true, null);
+                "[\"L\",\"L\",\"L\",\"L\",\"L\",\"L\",\"L\",\"L\",\"L\",\"L\"]", null);
 
         String actual = encodeToPredixFormat(input, null, null, "[0-9]+\n?");
         Assert.assertEquals(expected, actual);
@@ -280,7 +280,7 @@ public class PredixEncoderTest {
         ILoggingEvent input = createLogEvent(MESSAGE_TEXT, null, null, mdc);
 
         String expected = getExpectedOutput(input.getTimeStamp(), TENANT_VALUE_OTHER, CORRELATION_VALUE,
-                MESSAGE_OUTPUT, false, null);
+                MESSAGE_OUTPUT, null);
 
         String actual = encodeToPredixFormat(input, TENANT_KEY_OTHER, null, null);
         Assert.assertEquals(expected, actual);
@@ -294,7 +294,7 @@ public class PredixEncoderTest {
 
         ILoggingEvent input = createLogEvent(MESSAGE_TEXT, null, null, mdc);
 
-        String expected = getExpectedOutput(input.getTimeStamp(), "", CORRELATION_VALUE, MESSAGE_OUTPUT, false, null);
+        String expected = getExpectedOutput(input.getTimeStamp(), "", CORRELATION_VALUE, MESSAGE_OUTPUT, null);
 
         String actual = encodeToPredixFormat(input, TENANT_KEY_OTHER, null, null);
         Assert.assertEquals(expected, actual);
@@ -305,7 +305,7 @@ public class PredixEncoderTest {
 
         ILoggingEvent input = createLogEvent(MESSAGE_TEXT, null, null);
 
-        String expected = getExpectedOutput(input.getTimeStamp(), "", CORRELATION_VALUE, MESSAGE_OUTPUT, false, null);
+        String expected = getExpectedOutput(input.getTimeStamp(), "", CORRELATION_VALUE, MESSAGE_OUTPUT, null);
 
         String actual = encodeToPredixFormat(input, TENANT_KEY_OTHER, null, null);
         Assert.assertEquals(expected, actual);
@@ -317,7 +317,7 @@ public class PredixEncoderTest {
         ILoggingEvent input = createLogEvent(MESSAGE_TEXT, null, null);
 
         String expected = getExpectedOutput(input.getTimeStamp(), TENANT_VALUE, CORRELATION_VALUE,
-            MESSAGE_OUTPUT, false, null);
+            MESSAGE_OUTPUT, null);
 
         String actual = encodeToPredixFormat(input, "", null, null);
         Assert.assertEquals(expected, actual);
@@ -329,7 +329,7 @@ public class PredixEncoderTest {
         ILoggingEvent input = createLogEvent(MESSAGE_TEXT, null, null);
 
         String expected = getExpectedOutput(input.getTimeStamp(), TENANT_VALUE, CORRELATION_VALUE,
-            MESSAGE_OUTPUT, false, null);
+            MESSAGE_OUTPUT, null);
 
         String actual = encodeToPredixFormat(input, "    ", null, null);
         Assert.assertEquals(expected, actual);
@@ -345,7 +345,7 @@ public class PredixEncoderTest {
         ILoggingEvent input = createLogEvent(MESSAGE_TEXT, null, null, mdc);
 
         String expected = getExpectedOutput(input.getTimeStamp(), TENANT_VALUE, CORRELATION_VALUE_OTHER,
-                MESSAGE_OUTPUT, false, null);
+                MESSAGE_OUTPUT, null);
 
         String actual = encodeToPredixFormat(input, null, CORRELATION_KEY_OTHER, null);
         Assert.assertEquals(expected, actual);
@@ -359,7 +359,7 @@ public class PredixEncoderTest {
 
         ILoggingEvent input = createLogEvent(MESSAGE_TEXT, null, null, mdc);
 
-        String expected = getExpectedOutput(input.getTimeStamp(), TENANT_VALUE, "", MESSAGE_OUTPUT, false, null);
+        String expected = getExpectedOutput(input.getTimeStamp(), TENANT_VALUE, "", MESSAGE_OUTPUT, null);
 
         String actual = encodeToPredixFormat(input, null, CORRELATION_KEY_OTHER, null);
         Assert.assertEquals(expected, actual);
@@ -370,7 +370,7 @@ public class PredixEncoderTest {
 
         ILoggingEvent input = createLogEvent(MESSAGE_TEXT, null, null);
 
-        String expected = getExpectedOutput(input.getTimeStamp(), TENANT_VALUE, "", MESSAGE_OUTPUT, false, null);
+        String expected = getExpectedOutput(input.getTimeStamp(), TENANT_VALUE, "", MESSAGE_OUTPUT, null);
 
         String actual = encodeToPredixFormat(input, null, CORRELATION_KEY_OTHER, null);
         Assert.assertEquals(expected, actual);
@@ -435,21 +435,16 @@ public class PredixEncoderTest {
 
     private static String getExpectedOutput(final long timestamp, final String message, final String stack) {
 
-        return getExpectedOutput(timestamp, TENANT_VALUE, CORRELATION_VALUE, message, false, stack);
+        return getExpectedOutput(timestamp, TENANT_VALUE, CORRELATION_VALUE, message, stack);
     }
 
     private static String getExpectedOutput(final long timestamp, final String tenantValue, final String correlationValue,
-            final String message, final boolean multiLine, final String stack) {
+            final String message, final String stack) {
 
         String expectedOutput = "{\"time\":\"" + ISO_DATE_FORMAT.format(new Date(timestamp)) + "\",\"tnt\":\""
                 + tenantValue + "\",\"corr\":\"" + correlationValue + "\",\"appn\":\"" + APP_NAME_VALUE
                 + "\",\"dpmt\":\"" + APP_ID_VALUE + "\",\"inst\":\"" + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME
-                + "\",\"mod\":\"" + CLASS_NAME + "\",\"lvl\":\"" + Level.INFO + "\"";
-        if (multiLine) {
-            expectedOutput += ",\"msgLines\":" + message;
-        } else {
-            expectedOutput += ",\"msg\":" + message;
-        }
+                + "\",\"mod\":\"" + CLASS_NAME + "\",\"lvl\":\"" + Level.INFO + "\",\"msg\":" + message;
         if (stack != null) {
             expectedOutput += ",\"stck\":" + stack;
         }

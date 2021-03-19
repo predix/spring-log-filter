@@ -39,7 +39,7 @@ Utility  for request tracing, log enrichment and auditing.
 
 ## Sample log message:
 
-```json
+```yaml
 {
     "time": "2017-07-10T20:59:48.923+0000",
     "tnt": "uaa",
@@ -50,9 +50,10 @@ Utility  for request tracing, log enrichment and auditing.
     "tid": "http-nio-8080-exec-3",
     "mod": "ClientController.java",
     "lvl": "ERROR",
-    // either "msg" or "msgLines"
+    // either:
     "msg": "Failure during:\nPOST /v1/client",
-    "msgLines": [
+    // or:
+    "msg": [
         "Failure during:",
         "POST /v1/client"
     ],
@@ -133,11 +134,10 @@ the alternate field. If this property is set, the `corr` field of the log is pop
 
 # Multi-line message support
 
-In the default mode, the encoder outputs the log message using the `msg` field. This behavior remains unchanged.
+In the default mode, the encoder outputs the log message using the `msg` field.
 
 If the optional `messageLineSeparatorRegex` property is explicitly set, it activates line detection on the encoder.
-In this mode, the message is pre-processed to split it into multiple lines using the provided regex. The encoder outputs
-the resulting lines into a `msgLines` field instead of a `msg` field.
+In this mode, the message is pre-processed to split it into multiple lines using the provided regex.
 
 # Integration with Predix Audit
 

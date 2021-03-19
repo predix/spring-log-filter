@@ -115,7 +115,7 @@ public final class PredixLayout extends AbstractStringLayout {
         } else if (messageLineSeparatorPattern == null) {
             logFormat.put("msg", message.getFormattedMessage());
         } else {
-            logFormat.put("msgLines", messageLineSeparatorPattern.split(message.getFormattedMessage()));
+            logFormat.put("msg", messageLineSeparatorPattern.split(message.getFormattedMessage()));
         }
         if (null != event.getThrown()) {
             logFormat.put("stck", getStackTrace(event));
