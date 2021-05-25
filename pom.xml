@@ -22,7 +22,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.ge.predix</groupId>
     <artifactId>spring-log-filter</artifactId>
-    <version>3.0.0-SNAPSHOT</version>
+    <version>3.0.0</version>
     <name>Predix Spring Log Filter</name>
     <description>This library provides a spring filter that generates correlation ids to help trace issues in log files.</description>
     <packaging>jar</packaging>
