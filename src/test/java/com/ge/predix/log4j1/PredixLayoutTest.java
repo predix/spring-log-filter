@@ -37,6 +37,11 @@ public class PredixLayoutTest {
         ISO_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
+    private static final String CORRELATION_KEY = "traceId";
+    private static final String CORRELATION_KEY_OTHER = CORRELATION_KEY + "-Other";
+    private static final String CORRELATION_VALUE = "5678";
+    private static final String CORRELATION_VALUE_OTHER = CORRELATION_VALUE + "-Other";
+
     private static final String APP_ID = "APP_ID";
     private static final String APP_NAME = "APP_NAME";
     private static final String INSTANCE_ID = "INSTANCE_ID";
@@ -46,13 +51,11 @@ public class PredixLayoutTest {
     private static final String INSTANCE_INDEX_VALUE = "5";
     private static final String APP_NAME_VALUE = "uaa";
     private static final String APP_ID_VALUE = "098877475";
-    private static final String CORRELATION_VALUE = "5678";
     private static final String FILE_NAME = "test.java";
     private static final String CLASS_NAME = "com.ge.predix";
     private static final String METHOD_NAME = "caculateVolume";
     private static final String LINE_NUMBER = "23";
     private static final String THREAD_NAME = "Thread1";
-    private static final String CORRELATION_HEADER = "X-B3-TraceId";
     private static final String ZONE_HEADER = "Zone-Id";
 
     private static final Object MULTI_LINE_MESSAGE_TEXT = "L1\nL2" + System.lineSeparator() + "L3";
@@ -188,7 +191,7 @@ public class PredixLayoutTest {
     }
 
     @Test
-    public void testPredixEncoderWithNoMessageLineSeparator() {
+    public void testPredixLayoutWithNoMessageLineSeparator() {
 
         LoggingEvent input = createLogEvent(MULTI_LINE_MESSAGE_TEXT);
 
@@ -205,7 +208,7 @@ public class PredixLayoutTest {
     }
 
     @Test
-    public void testPredixEncoderWithInvalidMessageLineSeparator() {
+    public void testPredixLayoutWithInvalidMessageLineSeparator() {
 
         LoggingEvent input = createLogEvent(MULTI_LINE_MESSAGE_TEXT);
 
@@ -223,7 +226,7 @@ public class PredixLayoutTest {
     }
 
     @Test
-    public void testPredixEncoderWithSimpleMessageLineSeparator() {
+    public void testPredixLayoutWithSimpleMessageLineSeparator() {
 
         LoggingEvent input = createLogEvent(MULTI_LINE_MESSAGE_TEXT);
 
@@ -241,7 +244,7 @@ public class PredixLayoutTest {
     }
 
     @Test
-    public void testPredixEncoderWithRegexMessageLineSeparator() {
+    public void testPredixLayoutWithRegexMessageLineSeparator() {
 
         LoggingEvent input = createLogEvent(MULTI_LINE_MESSAGE_TEXT);
 
@@ -258,7 +261,7 @@ public class PredixLayoutTest {
     }
 
     @Test
-    public void testPredixEncoderWithNonStringMessageAndMessageLineSeparator() {
+    public void testPredixLayoutWithNonStringMessageAndMessageLineSeparator() {
 
         // When something other than a String is logged, the message line separator has no effect.
         LoggingEvent input = createLogEvent(getMsg());
@@ -276,13 +279,124 @@ public class PredixLayoutTest {
         Assert.assertEquals(expected, actual);
     }
 
-    private LoggingEvent createLogEvent(final Object message) {
-        LocationInfo info = new LocationInfo(FILE_NAME, CLASS_NAME, METHOD_NAME, LINE_NUMBER);
-        return new LoggingEvent(FILE_NAME, null, Instant.now().toEpochMilli(), Level.INFO, message, THREAD_NAME, null,
-                "ndc", info, getMDC());
+    @Test
+    public void testPredixLayoutWithCustomCorrelationKey() {
+
+        HashMap<String, String> mdc = getMDC();
+        mdc.remove(CORRELATION_KEY);
+        mdc.put(CORRELATION_KEY_OTHER, CORRELATION_VALUE_OTHER);
+
+        LoggingEvent input = createLogEvent(getMsg(), mdc);
+
+        String expected = "{\"time\":\"" + ISO_DATE_FORMAT.format(new Date(input.getTimeStamp())) + "\",\"tnt\":\""
+                          + ZONE_VALUE + "\",\"corr\":\"" + CORRELATION_VALUE_OTHER + "\",\"appn\":\"" + APP_NAME_VALUE
+                          + "\",\"dpmt\":\"" + APP_ID_VALUE + "\",\"inst\":\"" + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME
+                          + "\",\"mod\":\"" + FILE_NAME + "\",\"lvl\":\"" + Level.INFO.toString()
+                          + "\",\"msg\":{\"width\":4,\"length\":3,\"units\":\"inches\",\"height\":5}}\n";
+
+        PredixLayout predixLayout = new PredixLayout();
+        predixLayout.setMessageLineSeparatorRegex(null);
+        predixLayout.setCorrelationKey(CORRELATION_KEY_OTHER);
+        String actual = predixLayout.format(input);
+        System.out.println(actual);
+
+        Assert.assertEquals(actual, expected);
     }
 
-    private HashMap<String, Object> getMsg() {
+    @Test
+    public void testPredixLayoutWithMissingCustomCorrelationKey() {
+
+        HashMap<String, String> mdc = getMDC();
+        mdc.remove(CORRELATION_KEY);
+
+        LoggingEvent input = createLogEvent(getMsg(), mdc);
+
+        String expected = "{\"time\":\"" + ISO_DATE_FORMAT.format(new Date(input.getTimeStamp())) + "\",\"tnt\":\""
+                          + ZONE_VALUE + "\",\"corr\":null,\"appn\":\"" + APP_NAME_VALUE
+                          + "\",\"dpmt\":\"" + APP_ID_VALUE + "\",\"inst\":\"" + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME
+                          + "\",\"mod\":\"" + FILE_NAME + "\",\"lvl\":\"" + Level.INFO.toString()
+                          + "\",\"msg\":{\"width\":4,\"length\":3,\"units\":\"inches\",\"height\":5}}\n";
+
+        PredixLayout predixLayout = new PredixLayout();
+        predixLayout.setMessageLineSeparatorRegex(null);
+        predixLayout.setCorrelationKey(CORRELATION_KEY_OTHER);
+        String actual = predixLayout.format(input);
+        System.out.println(actual);
+
+        Assert.assertEquals(actual, expected);
+    }
+
+    @Test
+    public void testPredixLayoutWithMissingCustomCorrelationKeyDoesNotUseDefaultCorrelationKey() {
+
+        LoggingEvent input = createLogEvent(getMsg());
+
+        String expected = "{\"time\":\"" + ISO_DATE_FORMAT.format(new Date(input.getTimeStamp())) + "\",\"tnt\":\""
+                          + ZONE_VALUE + "\",\"corr\":null,\"appn\":\"" + APP_NAME_VALUE
+                          + "\",\"dpmt\":\"" + APP_ID_VALUE + "\",\"inst\":\"" + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME
+                          + "\",\"mod\":\"" + FILE_NAME + "\",\"lvl\":\"" + Level.INFO.toString()
+                          + "\",\"msg\":{\"width\":4,\"length\":3,\"units\":\"inches\",\"height\":5}}\n";
+
+        PredixLayout predixLayout = new PredixLayout();
+        predixLayout.setMessageLineSeparatorRegex(null);
+        predixLayout.setCorrelationKey(CORRELATION_KEY_OTHER);
+        String actual = predixLayout.format(input);
+        System.out.println(actual);
+
+        Assert.assertEquals(actual, expected);
+    }
+
+    @Test
+    public void testPredixLayoutWithEmptyCustomCorrelationKeyUsesDefaultCorrelationKey() {
+
+        LoggingEvent input = createLogEvent(getMsg());
+
+        String expected = "{\"time\":\"" + ISO_DATE_FORMAT.format(new Date(input.getTimeStamp())) + "\",\"tnt\":\""
+                          + ZONE_VALUE + "\",\"corr\":\"" + CORRELATION_VALUE + "\",\"appn\":\"" + APP_NAME_VALUE
+                          + "\",\"dpmt\":\"" + APP_ID_VALUE + "\",\"inst\":\"" + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME
+                          + "\",\"mod\":\"" + FILE_NAME + "\",\"lvl\":\"" + Level.INFO.toString()
+                          + "\",\"msg\":{\"width\":4,\"length\":3,\"units\":\"inches\",\"height\":5}}\n";
+
+        PredixLayout predixLayout = new PredixLayout();
+        predixLayout.setMessageLineSeparatorRegex(null);
+        predixLayout.setCorrelationKey("");
+        String actual = predixLayout.format(input);
+        System.out.println(actual);
+
+        Assert.assertEquals(actual, expected);
+    }
+
+    @Test
+    public void testPredixLayoutWithBlankCustomCorrelationKeyUsesDefaultCorrelationKey() {
+
+        LoggingEvent input = createLogEvent(getMsg());
+
+        String expected = "{\"time\":\"" + ISO_DATE_FORMAT.format(new Date(input.getTimeStamp())) + "\",\"tnt\":\""
+                          + ZONE_VALUE + "\",\"corr\":\"" + CORRELATION_VALUE + "\",\"appn\":\"" + APP_NAME_VALUE
+                          + "\",\"dpmt\":\"" + APP_ID_VALUE + "\",\"inst\":\"" + INSTANCE_ID_VALUE + "\",\"tid\":\"" + THREAD_NAME
+                          + "\",\"mod\":\"" + FILE_NAME + "\",\"lvl\":\"" + Level.INFO.toString()
+                          + "\",\"msg\":{\"width\":4,\"length\":3,\"units\":\"inches\",\"height\":5}}\n";
+
+        PredixLayout predixLayout = new PredixLayout();
+        predixLayout.setMessageLineSeparatorRegex(null);
+        predixLayout.setCorrelationKey("    ");
+        String actual = predixLayout.format(input);
+        System.out.println(actual);
+
+        Assert.assertEquals(actual, expected);
+    }
+
+    private static LoggingEvent createLogEvent(final Object message) {
+        return createLogEvent(message, getMDC());
+    }
+
+    private static LoggingEvent createLogEvent(final Object message, HashMap<String, String> mdc) {
+        LocationInfo info = new LocationInfo(FILE_NAME, CLASS_NAME, METHOD_NAME, LINE_NUMBER);
+        return new LoggingEvent(FILE_NAME, null, Instant.now().toEpochMilli(), Level.INFO, message, THREAD_NAME, null,
+                "ndc", info, mdc);
+    }
+
+    private static HashMap<String, Object> getMsg() {
         HashMap<String, Object> msg = new HashMap<>();
         msg.put("height", 5);
         msg.put("width", 4);
@@ -291,9 +405,9 @@ public class PredixLayoutTest {
         return msg;
     }
 
-    private HashMap<String, String> getMDC() {
+    private static HashMap<String, String> getMDC() {
         HashMap<String, String> mdc = new HashMap<>();
-        mdc.put(CORRELATION_HEADER, CORRELATION_VALUE);
+        mdc.put(CORRELATION_KEY, CORRELATION_VALUE);
         mdc.put(APP_ID, APP_ID_VALUE);
         mdc.put(APP_NAME, APP_NAME_VALUE);
         mdc.put(INSTANCE_ID, INSTANCE_ID_VALUE);

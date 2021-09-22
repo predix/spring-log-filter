@@ -27,6 +27,10 @@ public class PredixLayout extends Layout {
         predixLayoutPattern.setMessageLineSeparatorRegex(messageLineSeparatorRegex);
     }
 
+    public void setCorrelationKey(final String correlationKey) {
+        predixLayoutPattern.setCorrelationKey(correlationKey);
+    }
+
     @Override
     public String format(final LoggingEvent event) {
         return predixLayoutPattern.convert(event);

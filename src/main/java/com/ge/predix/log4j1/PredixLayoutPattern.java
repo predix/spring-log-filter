@@ -37,6 +37,8 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 
 public class PredixLayoutPattern extends PatternConverter {
 
+    private static final String DEFAULT_CORRELATION_KEY = "traceId";
+
     private static final SimpleDateFormat ISO_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
     static {
         ISO_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -45,6 +47,7 @@ public class PredixLayoutPattern extends PatternConverter {
     private static final ObjectWriter JSON_WRITER = new ObjectMapper().writer();
 
     private Pattern messageLineSeparatorPattern = null;
+    private String correlationKey = DEFAULT_CORRELATION_KEY;
 
     public void setMessageLineSeparatorRegex(final String messageLineSeparatorRegex) {
         messageLineSeparatorPattern = null;
@@ -58,6 +61,10 @@ public class PredixLayoutPattern extends PatternConverter {
         }
     }
 
+    public void setCorrelationKey(final String correlationKey) {
+        this.correlationKey = StringUtils.hasText(correlationKey) ? correlationKey : DEFAULT_CORRELATION_KEY;
+    }
+
     @Override
     protected String convert(final LoggingEvent event) {
         // need LinkedHashMap to preserve order of log fields
@@ -65,7 +72,7 @@ public class PredixLayoutPattern extends PatternConverter {
 
         logFormat.put("time", ISO_DATE_FORMAT.format(new Date(event.getTimeStamp())));
         logFormat.put("tnt", event.getMDC("Zone-Id"));
-        logFormat.put("corr", event.getMDC("X-B3-TraceId"));
+        logFormat.put("corr", event.getMDC(this.correlationKey));
         logFormat.put("appn", event.getMDC("APP_NAME"));
         logFormat.put("dpmt", event.getMDC("APP_ID"));
         logFormat.put("inst", event.getMDC("INSTANCE_ID"));
