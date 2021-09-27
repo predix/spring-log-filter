@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2017 General Electric Company
+ * Copyright 2021 General Electric Company
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +31,7 @@ import org.testng.annotations.Test;
 public class AuditEventTest {
 
     private static final String URI = "/guardians/123";
-    private static final String CORRELATION_HEADER = "Correlation-Id";
     private static final String ZONE_ID = "1234";
-    private static final String CORRELATION_VALUE = "5678";
     private static final String METHOD = "POST";
     private static final String REQUEST_BODY = "request content";
     private static final String RESPONSE_BODY = "response content";
@@ -42,7 +40,6 @@ public class AuditEventTest {
     public void testAuditEvent() throws IOException {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setRequestURI(URI);
-        request.addHeader(CORRELATION_HEADER, CORRELATION_VALUE);
         request.setMethod(METHOD);
         request.setContent(REQUEST_BODY.getBytes());
         MockHttpServletResponse response = new MockHttpServletResponse();
@@ -54,15 +51,13 @@ public class AuditEventTest {
         cachedRequest.getReader().readLine();
         cachedResponse.getWriter().write(RESPONSE_BODY);
 
-        AuditEvent event = new AuditEvent(cachedRequest, cachedResponse, ZONE_ID, CORRELATION_VALUE);
+        AuditEvent event = new AuditEvent(cachedRequest, cachedResponse, ZONE_ID);
         // test that the time stamp on the Audit event is less then 250 ms from now
         assertTrue((Instant.now().toEpochMilli() - event.getTime().toEpochMilli()) < 250);
         assertEquals(event.getRequestUri(), URI);
         assertEquals(event.getZoneId(), ZONE_ID);
-        assertEquals(event.getCorrelationId(), CORRELATION_VALUE);
         assertEquals(event.getMethod(), METHOD);
         assertEquals(event.getRequestBody(), REQUEST_BODY);
         assertEquals(event.getResponseBody(), RESPONSE_BODY);
     }
-
 }

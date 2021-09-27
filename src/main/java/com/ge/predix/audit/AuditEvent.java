@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2017 General Electric Company
+ * Copyright 2021 General Electric Company
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class AuditEvent {
 
-    private final String correlationId;
     private final String requestBody;
     private final String responseBody;
     private final String method;
@@ -42,9 +41,8 @@ public class AuditEvent {
     private final String toString;
 
     public AuditEvent(final ContentCachingRequestWrapper requestWrapper,
-            final ContentCachingResponseWrapper responseWrapper, final String zoneId, final String correlationId)
+            final ContentCachingResponseWrapper responseWrapper, final String zoneId)
             throws JsonProcessingException {
-        this.correlationId = correlationId;
         this.status = responseWrapper.getStatus();
         this.method = requestWrapper.getMethod();
         this.sourceIp = requestWrapper.getRemoteHost();
@@ -60,10 +58,6 @@ public class AuditEvent {
     @Override
     public String toString() {
         return this.toString;
-    }
-
-    public String getCorrelationId() {
-        return this.correlationId;
     }
 
     public String getRequestBody() {

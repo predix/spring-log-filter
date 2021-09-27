@@ -25,14 +25,14 @@ pipeline {
                     unset HTTPS_PROXY_PORT
                     unset HTTPS_PROXY_HOST
 
-                    mvn clean verify -s spring-filters-config/mvn_settings_noproxy.xml
+                    mvn clean verify -B -s spring-filters-config/mvn_settings_noproxy.xml
                 '''
                 // No Test reports
             }
         }
         stage('Publish Artifacts') {
             when {
-                branch 'master'
+                branch 'release-2.1.0'
             }
             environment {
                 DEPLOY_CREDS = credentials('uaa-predix-artifactory-upload-credentials')
