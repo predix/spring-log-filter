@@ -53,7 +53,7 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <!-- Dependency Versions -->
         <spring.version>5.3.4</spring.version>
-        <jackson.version>2.12.1</jackson.version>
+        <jackson.version>2.12.7.1</jackson.version>
         <!-- Test Dependency Versions -->
         <mockito.version>1.10.19</mockito.version>
         <testng.version>7.3.0</testng.version>
